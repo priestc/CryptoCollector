@@ -5,8 +5,8 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'CoinStove.views.home', name='home'),
-    # url(r'^blog/', include('blog.urls')),
+    url(r'^$', 'main.views.home', name='home'),
+    url(r'^wallet/', include('wallet.urls')),
 
     url(r'^admin/', include(admin.site.urls)),
 )
