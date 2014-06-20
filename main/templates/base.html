@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <style>
+            #contrib-messages {
+                border:0px solid #C8DCC2;
+                margin:1em 0;
+                padding: 2em;
+            }
+            #contrib-messages li {padding: 2em; list-style: none;}
+
+            #contrib-messages .debug{ background: #EEFAEA; }
+            #contrib-messages .info{ background: #EEFAEA; }
+            #contrib-messages .success{ background: #EEFAEA; }
+            #contrib-messages .warning{ background: #FF3333; }
+            #contrib-messages .error{ background: #FF3333; }
+        </style>
+    </head>
+    <body>
+    {% if messages %}
+    <ul id="contrib-messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+    </body>
+</html>

@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+
+<style>
+    body {
+        font-family: 'Helvetica';
+    }
+    h1.overall_total {
+        float: right;
+    }
+    h1.logo {
+        float: left
+    }
+    .modal {
+        display: none;
+        background: white;
+        width: 400px;
+        border: 1px solid black;
+    }
+    .modal-title {
+        width: 100%;
+        background: gray;
+        padding: 2px 0 2px 0px;
+        text-align: center;
+    }
+    .modal-container {
+        padding: 4px;
+    }
+    .modal-center-text {
+        width: 100%;
+        margin-top: 14px;
+        margin-bottom: 14px;
+        text-align: center;
+        font-size: large;
+    }
+    .wallet-container {
+        width: 60%;
+        margin: 0 auto 0 auto;
+        padding: 10px;
+    }
+    .wallet {
+        width: 95%;
+        border: 1px solid black;
+        margin: 10px;
+        padding: 5px;
+    }
+
+    .wallet h2 {
+        padding: 0px;
+        margin: 0px;
+        margin-bottom: 10px
+    }
+    .wallet-address-details {
+        border: 1px solid gray;
+        margin-top: 3px;
+    }
+    .reload-wallet-price {
+        text-decoration: none;
+    }
+    a.reload-wallet-price:hover {
+        color: red;
+    }
+    .spinner {
+        display: none;
+    }
+
+    th {
+        text-align: right
+    }
+
+    .no-private-key {
+        color: red;
+    }
+
+    .wallet-value {
+        font-size: x-large;
+    }
+    .fiat-exchange {
+        font-size: x-large;
+    }
+    .fiat-value {
+        font-size: x-large;
+    }
+    .help {
+        font-size: small;
+    }
+    /* currency specific styles */
+
+    .wallet-ltc {
+        background: silver;
+    }
+    .wallet-btc {
+        background: gold
+    }
+    .wallet-ftc {
+        background: cyan;
+    }
+    .wallet-doge {
+        background: yellow;
+    }
+    .wallet-ppc {
+        background: pink;
+    }
+    .wallet-vtc {
+        background: lime;
+    }
+    .wallet-nxt {
+        background: violet;
+    }
+</style>
+
+
+<div class="wallet-container">
+    <h1 class="logo">CoinStove</h1>
+    <h1 class='overall_total'>
+        <img class="spinner" id="overall-spinner" src="/static/spinner16.gif" height="16" width="16">
+        <span id="total-fiat-amount"></span>
+        <span class="fiat_currency">USD</span>
+    </h1>
+
+    <div style="clear: both;"></div>
+    <hr>
+
+    <button id="new-wallet">Create New Wallet</button>
+
+    {% for symbol, wallets in wallets_for_all_currencies.items %}
+        <div class="wallet wallet-{{ wallets.0.symbol|lower }}">
+            <h2>{{ wallets.0.symbol }} - {{ wallets.0.full_name }}</h2>
+            {% for wallet in wallets %}
+            <table class="wallet-address-details" id="{{ wallet.js_id }}">
+                <tr>
+                    <th>Name:</th>
+                    <td>
+                    {% if wallet.name %}
+                    {{ wallet.name }}
+                    {% else %}
+                    My {{ wallet.symbol }}
+                    {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Address:</th>
+                    <td>
+                        <span class="public-key">{{ wallet.public_key }}</span>
+                        <a class="public-qr" href="#">QR</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Private Key:</th>
+                    <td>
+                        {% if wallet.has_private_key %}
+                            click to show
+                        {% else %}
+                            <span class='no-private-key private-key'>Not present</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Balance:</th>
+                    <td>
+                        <span class="wallet-value">{# gets filled in at the bottom in js #}</span>
+                        {{ wallet.symbol }}
+                        *
+                        <span class="fiat-exchange" title="Price from: {{ wallet.price_source }}">
+                        {# gets filled in at the bottom in js #}
+                        </span>
+                        {{ wallet.symbol }}/USD
+                        =
+                        <span class="fiat-value">{# gets filled in at the bottom in js #}</span>
+                        USD
+                        <a href="#" class="reload-wallet-price" data-wallet-id="{{ wallet.js_id }}">&#x21bb;</a>
+                        <img class="spinner price-spinner" src="/static/spinner16.gif" height="16" width="16">
+                        <span class="error"></span>
+                    </td>
+                </tr>
+            </table>
+            {% endfor %}
+
+            <hr>
+
+            {% if wallet.has_private_key %}
+                <button>Create Transaction / Send Money</button>
+            {% else %}
+                <button>Import Private Key</button><br>
+                <em>You cannot send money from this address until a private key has been imported.</em>
+            {% endif %}
+
+            <hr>
+
+            <a href="#" class="show-transactions" data-wallet-id="{{ wallet.js_id }}">Show Transactions</a>
+            <img class="spinner transaction-spinner" src="/static/spinner16.gif" height="16" width="16">
+            <div class='transaction-container'></div>
+        </div>
+    {% endfor %}
+</div>
+
+<div id="new-wallet-modal" class="modal">
+    <div class='modal-title'>New Wallet</div>
+    <div class="modal-container">
+        <form method="post">
+            {% csrf_token %}
+            {{ new_wallet_form.type.label }}: {{ new_wallet_form.type }}
+            {{ new_wallet_form.type.errors }}
+            <br>
+            {{ new_wallet_form.nickname.label }}: {{ new_wallet_form.nickname }}
+            <span class="help">{{ new_wallet_form.nickname.help_text }}</span>
+            {{ new_wallet_form.nickname.errors }}
+            <br>
+            <div class="modal-center-text">
+                Either enter existing private/public key pair...
+            </div>
+            {{ new_wallet_form.public_key.label }}: {{ new_wallet_form.public_key }}
+            {{ new_wallet_form.public_key.errors }}
+            <br>
+            {{ new_wallet_form.private_key.label }}: {{ new_wallet_form.private_key }}
+            {{ new_wallet_form.private_key.errors }}
+            <br>
+            <input type="submit" value="Add New Wallet">
+
+            <br>
+            <div class="modal-center-text">
+                Or...
+            </div>
+            <input type="submit" value="Generate New Wallet Address">
+        </form>
+    </div>
+</div>
+
+<script src="/static/jquery.bpopup.min.js"></script>
+<script src="/static/wallet.js"></script>
+<script>
+    $(function() {
+        // Done this way so that all number formatting goes through one place.
+        {% for wallets in wallets_for_all_currencies.values %}
+        {% for wallet in wallets %}
+        update_DOM_with_price_for_wallet('{{ wallet.js_id }}', {{ wallet.price_json|safe }});
+        {% endfor %}
+        {% endfor %}
+        update_overall_fiat_total();
+
+        {% if new_wallet_form.errors %}
+        $("#new-wallet-modal").bPopup();
+        {% endif %}
+    });
+</script>
+{% endblock %}
