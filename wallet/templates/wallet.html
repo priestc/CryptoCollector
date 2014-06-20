@@ -25,8 +25,13 @@
         padding: 2px 0 2px 0px;
         text-align: center;
     }
-    .modal-container {
+    .modal-contents {
         padding: 4px;
+        text-align: center;
+    }
+    .modal-contents canvas {
+        margin: 0 auto 0 auto;
+        display: inline;
     }
     .modal-center-text {
         width: 100%;
@@ -111,6 +116,24 @@
     }
 </style>
 
+<script src="/static/jquery.jsqrcode.min.js"></script>
+<script src="/static/jsqrcode/grid.js"></script>
+<script src="/static/jsqrcode/version.js"></script>
+<script src="/static/jsqrcode/detector.js"></script>
+<script src="/static/jsqrcode/formatinf.js"></script>
+<script src="/static/jsqrcode/errorlevel.js"></script>
+<script src="/static/jsqrcode/bitmat.js"></script>
+<script src="/static/jsqrcode/datablock.js"></script>
+<script src="/static/jsqrcode/bmparser.js"></script>
+<script src="/static/jsqrcode/datamask.js"></script>
+<script src="/static/jsqrcode/rsdecoder.js"></script>
+<script src="/static/jsqrcode/gf256poly.js"></script>
+<script src="/static/jsqrcode/gf256.js"></script>
+<script src="/static/jsqrcode/decoder.js"></script>
+<script src="/static/jsqrcode/qrcode.js"></script>
+<script src="/static/jsqrcode/findpat.js"></script>
+<script src="/static/jsqrcode/alignpat.js"></script>
+<script src="/static/jsqrcode/databr.js"></script>
 
 <div class="wallet-container">
     <h1 class="logo">CoinStove</h1>
@@ -144,14 +167,21 @@
                     <th>Address:</th>
                     <td>
                         <span class="public-key">{{ wallet.public_key }}</span>
-                        <a class="public-qr" href="#">QR</a>
+                        <div class="public-key-qr-modal modal">
+                            <div class='modal-title'>{{ wallet.name }} Public key QR code</div>
+                            <div class="modal-contents"></div>
+                            <div style="text-align: center; padding: 5px; font-weight: bold">
+                                {{ wallet.public_key }}
+                            </div>
+                        </div>
+                        <a class="launch-public-qr-modal" href="#">QR</a>
                     </td>
                 </tr>
                 <tr>
                     <th>Private Key:</th>
                     <td>
                         {% if wallet.has_private_key %}
-                            click to show
+                            <a href="#" class="launch-private-qr-modal">click to show</a>
                         {% else %}
                             <span class='no-private-key private-key'>Not present</span>
                         {% endif %}
@@ -198,7 +228,7 @@
 
 <div id="new-wallet-modal" class="modal">
     <div class='modal-title'>New Wallet</div>
-    <div class="modal-container">
+    <div class="modal-contents">
         <form method="post">
             {% csrf_token %}
             {{ new_wallet_form.type.label }}: {{ new_wallet_form.type }}
@@ -239,6 +269,14 @@
         {% endfor %}
         {% endfor %}
         update_overall_fiat_total();
+
+        $(".launch-public-qr-modal").click(function(event){
+            event.preventDefault();
+            var modal = $(this).prev();
+            var public_key = modal.prev().text();
+            modal.find(".modal-contents").qrcode(public_key);
+            modal.bPopup();
+        });
 
         {% if new_wallet_form.errors %}
         $("#new-wallet-modal").bPopup();
