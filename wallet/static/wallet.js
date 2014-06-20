@@ -49,7 +49,7 @@ $(function() {
                 var time_utc = transaction['time_utc'];
                 var amount = transaction['amount'];
                 var txid = transaction['tx'];
-                container.html(container.html() + txid + '<br>')
+                container.html(container.html() + txid + '<br>');
             })
         }).error(function(response) {
             // dump error message to the screen, figure it out later.
@@ -75,7 +75,6 @@ $(function() {
         }).success(function(data) {
             // returned will be new totals for this wallet
             // plug into front end.
-
             update_DOM_with_price_for_wallet(wallet_id, data);
             update_overall_fiat_total();
         }).error(function(response) {
@@ -85,4 +84,33 @@ $(function() {
             $("#overall-spinner").hide();
         });
     });
+
+    $(".launch-public-qr-modal").click(function(event) {
+        event.preventDefault();
+        var modal = $(this).prev();
+        var public_key = $(this).data('public-key');
+        modal.find(".modal-contents").qrcode(public_key);
+        modal.bPopup();
+    });
+
+    $(".launch-private-qr-modal").click(function(event) {
+        // Make ajax call to get the private key from the server.
+        // This is done to prevent private keys from being accidently stolen.
+        event.preventDefault();
+        //debugger;
+        var modal = $(this).prev();
+        var js_id = $(this).data('js-id');
+
+        $.ajax({
+            url: "/wallets/get_private_key/",
+            data: {js_id: js_id},
+        }).success(function(private_key){
+            console.log("returned private key");
+            modal.find(".modal-contents").qrcode(private_key);
+            modal.find(".modal-bottom-section").text(private_key);
+            modal.bPopup();
+        });
+
+    });
+
 });

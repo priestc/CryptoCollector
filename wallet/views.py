@@ -20,7 +20,7 @@ def wallets(request):
             except NotImplementedError:
                 curr = form.cleaned_data['type'].upper()
                 messages.error(request, "Can't create wallets of type %s yet" % curr)
-                
+
     wallets = {}
     for symbol, Wallet in wallet_classes.items():
         wallets[symbol] = Wallet.objects.filter(owner__id=request.user.id)
@@ -57,3 +57,11 @@ def get_value(request):
         'fiat_value': wallet.get_fiat_value(),
     }
     return HttpResponse(json.dumps(res), content_type="application/json")
+
+
+def get_private_key(request):
+    symbol, pk = request.GET['js_id'].split('-')
+    wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
+        owner__id=request.user.id
+    ).get()
+    return HttpResponse(wallet.private_key, content_type="text/plain")

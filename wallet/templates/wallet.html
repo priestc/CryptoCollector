@@ -33,12 +33,23 @@
         margin: 0 auto 0 auto;
         display: inline;
     }
+    .modal-top-section {
+        /* Used in the private key modal */
+        padding: 4px;
+        color: darkred;
+        font-weight: bold;
+    }
     .modal-center-text {
         width: 100%;
         margin-top: 14px;
         margin-bottom: 14px;
         text-align: center;
         font-size: large;
+    }
+    .modal-bottom-section {
+        text-align: center;
+        padding: 5px;
+        font-weight: bold;
     }
     .wallet-container {
         width: 60%;
@@ -170,18 +181,27 @@
                         <div class="public-key-qr-modal modal">
                             <div class='modal-title'>{{ wallet.name }} Public key QR code</div>
                             <div class="modal-contents"></div>
-                            <div style="text-align: center; padding: 5px; font-weight: bold">
+                            <div class="modal-bottom-section">
                                 {{ wallet.public_key }}
                             </div>
                         </div>
-                        <a class="launch-public-qr-modal" href="#">QR</a>
+                        <a class="launch-public-qr-modal" data-public-key="{{ wallet.public_key }}" href="#">QR</a>
                     </td>
                 </tr>
                 <tr>
                     <th>Private Key:</th>
                     <td>
                         {% if wallet.has_private_key %}
-                            <a href="#" class="launch-private-qr-modal">click to show</a>
+                            <div class="public-key-qr-modal modal">
+                                <div class='modal-title'>{{ wallet.name }} Public key QR code</div>
+                                <div class="modal-top-section">
+                                    Be careful! Anyone who has access to this information
+                                    can withdraw money from this address.
+                                </div>
+                                <div class="modal-contents"></div>
+                                <div class="modal-bottom-section"></div>
+                            </div>
+                            <a href="#" class="launch-private-qr-modal" data-js-id="{{ wallet.js_id }}">click to show</a>
                         {% else %}
                             <span class='no-private-key private-key'>Not present</span>
                         {% endif %}
@@ -269,14 +289,6 @@
         {% endfor %}
         {% endfor %}
         update_overall_fiat_total();
-
-        $(".launch-public-qr-modal").click(function(event){
-            event.preventDefault();
-            var modal = $(this).prev();
-            var public_key = modal.prev().text();
-            modal.find(".modal-contents").qrcode(public_key);
-            modal.bPopup();
-        });
 
         {% if new_wallet_form.errors %}
         $("#new-wallet-modal").bPopup();
