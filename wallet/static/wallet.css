@@ -102,6 +102,23 @@ th {
 .help {
     font-size: small;
 }
+.transaction {
+    border: 1px solid black;
+    background: #a3d3e8;
+}
+.transaction .date {
+    font-weight: bold;
+    padding-right: 20px;
+}
+.transaction .received {
+    color: green;
+}
+.transaction .sent {
+    color: red;
+}
+.transaction .verb {
+    padding-right: 20px;
+}
 /* currency specific styles */
 
 .wallet-ltc {

@@ -1,3 +1,14 @@
+if (!String.format) {
+  String.format = function(format) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return format.replace(/{(\d+)}/g, function(match, number) {
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
 function numberWithCommas(x) {
     var parts = x.toString().split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -34,6 +45,26 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
     $("#" + wallet_id + " .fiat-value").html(fiat_value);
 }
 
+function make_tx_html(transaction) {
+    var time_utc = new Date(transaction['time_utc']);
+    var amount = Number(transaction['amount']);
+    var txid = transaction['tx'];
+
+    if(amount < 0) {
+        var verb = 'Sent';
+    } else {
+        var verb = "Recieved";
+    }
+    console.log(amount, verb);
+    return String.format(
+        "<div class='transaction'>" +
+            "<span class='date'>{0}</span>" +
+            "<span class='verb {1}'>{1}</span>{2}" +
+        "</div>",
+        time_utc.toDateString(), verb, Math.abs(amount)
+    )
+}
+
 $(function() {
     $("#new-wallet").click(function() {
         $("#new-wallet-modal").bPopup();
@@ -49,16 +80,13 @@ $(function() {
         spinner.show();
 
         $.ajax({
-            url: "/wallet/transactions",
+            url: "/wallets/transactions",
             data: {js_id: wallet_id},
         }).success(function(transactions) {
             console.log(transactions);
             $.each(transactions, function(i, transaction) {
-                console.log(transaction);
-                var time_utc = transaction['time_utc'];
-                var amount = transaction['amount'];
-                var txid = transaction['tx'];
-                container.html(container.html() + txid + '<br>');
+                html = make_tx_html(transaction);
+                container.html(container.html() + html);
             })
         }).error(function(response) {
             // dump error message to the screen, figure it out later.
