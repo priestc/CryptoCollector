@@ -84,6 +84,7 @@ a.reload-wallet-price:hover {
 th {
     text-align: right;
     width: 9em;
+    vertical-align: top;
 }
 
 .no-private-key {
@@ -107,17 +108,13 @@ th {
     background: #a3d3e8;
 }
 .transaction .date {
-    font-weight: bold;
-    padding-right: 20px;
+    font-size: small;
 }
-.transaction .received {
+.transaction .Received {
     color: green;
 }
-.transaction .sent {
+.transaction .Sent {
     color: red;
-}
-.transaction .verb {
-    padding-right: 20px;
 }
 /* currency specific styles */
 

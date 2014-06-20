@@ -192,6 +192,11 @@ class LitecoinWallet(CryptoWallet):
         keypair = LitecoinKeypair()
         return keypair.address(), keypair.private_key()
 
+    @bypassable_cache
+    def get_transactions(self):
+        url = 'http://ltc.blockr.io/api/v1/address/txs/' + self.public_key
+        response = requests.get(url)
+        return response.json()['data']['txs']
 
 class DogecoinWallet(CryptoWallet):
     symbol = "DOGE"
@@ -218,7 +223,6 @@ class DogecoinWallet(CryptoWallet):
     def generate_new_keypair(cls):
         keypair = DogecoinKeypair()
         return keypair.address(), keypair.private_key()
-
 
 class PeercoinWallet(CryptoWallet):
     symbol = "PPC"
@@ -252,6 +256,11 @@ class PeercoinWallet(CryptoWallet):
         keypair = PeercoinKeypair()
         return keypair.address(), keypair.private_key()
 
+    @bypassable_cache
+    def get_transactions(self):
+        url = 'http://ppc.blockr.io/api/v1/address/txs/' + self.public_key
+        response = requests.get(url)
+        return response.json()['data']['txs']
 
 class FeathercoinWallet(CryptoWallet):
     symbol = 'FTC'

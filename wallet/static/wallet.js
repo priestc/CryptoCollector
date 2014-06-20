@@ -9,6 +9,35 @@ if (!String.format) {
     });
   };
 }
+
+function timeSince(date) {
+
+    var seconds = Math.floor((new Date() - date) / 1000);
+
+    var interval = Math.floor(seconds / 31536000);
+
+    if (interval > 1) {
+        return interval + " years";
+    }
+    interval = Math.floor(seconds / 2592000);
+    if (interval > 1) {
+        return interval + " months";
+    }
+    interval = Math.floor(seconds / 86400);
+    if (interval > 1) {
+        return interval + " days";
+    }
+    interval = Math.floor(seconds / 3600);
+    if (interval > 1) {
+        return interval + " hours";
+    }
+    interval = Math.floor(seconds / 60);
+    if (interval > 1) {
+        return interval + " minutes";
+    }
+    return Math.floor(seconds) + " seconds";
+}
+
 function numberWithCommas(x) {
     var parts = x.toString().split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -45,7 +74,7 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
     $("#" + wallet_id + " .fiat-value").html(fiat_value);
 }
 
-function make_tx_html(transaction) {
+function make_tx_html(transaction, cardinal) {
     var time_utc = new Date(transaction['time_utc']);
     var amount = Number(transaction['amount']);
     var txid = transaction['tx'];
@@ -53,15 +82,20 @@ function make_tx_html(transaction) {
     if(amount < 0) {
         var verb = 'Sent';
     } else {
-        var verb = "Recieved";
+        var verb = "Received";
     }
     console.log(amount, verb);
     return String.format(
-        "<div class='transaction'>" +
-            "<span class='date'>{0}</span>" +
-            "<span class='verb {1}'>{1}</span>{2}" +
-        "</div>",
-        time_utc.toDateString(), verb, Math.abs(amount)
+        "<tr class='transaction'>" +
+            "<td>{0}</td>" +
+            "<td class='date'>" +
+                "<span class='date'>{1}</span>" +
+                "<span class='time-ago'> ({2} ago)</span>" +
+            "</td>" +
+            "<td class='verb {3}'>{3}</td>" +
+            "<td class='amount'>{4}</td>" +
+        "</tr>",
+        cardinal, time_utc.toDateString(), timeSince(time_utc), verb, Math.abs(amount)
     )
 }
 
@@ -83,9 +117,8 @@ $(function() {
             url: "/wallets/transactions",
             data: {js_id: wallet_id},
         }).success(function(transactions) {
-            console.log(transactions);
-            $.each(transactions, function(i, transaction) {
-                html = make_tx_html(transaction);
+            $.each(transactions.reverse(), function(i, transaction) {
+                html = make_tx_html(transaction, i + 1);
                 container.html(container.html() + html);
             })
         }).error(function(response) {
