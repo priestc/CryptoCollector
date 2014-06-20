@@ -1,132 +1,8 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block content %}
-
-<style>
-    body {
-        font-family: 'Helvetica';
-    }
-    h1.overall_total {
-        float: right;
-    }
-    h1.logo {
-        float: left
-    }
-    .modal {
-        display: none;
-        background: white;
-        width: 400px;
-        border: 1px solid black;
-    }
-    .modal-title {
-        width: 100%;
-        background: gray;
-        padding: 2px 0 2px 0px;
-        text-align: center;
-    }
-    .modal-contents {
-        padding: 4px;
-        text-align: center;
-    }
-    .modal-contents canvas {
-        margin: 0 auto 0 auto;
-        display: inline;
-    }
-    .modal-top-section {
-        /* Used in the private key modal */
-        padding: 4px;
-        color: darkred;
-        font-weight: bold;
-    }
-    .modal-center-text {
-        width: 100%;
-        margin-top: 14px;
-        margin-bottom: 14px;
-        text-align: center;
-        font-size: large;
-    }
-    .modal-bottom-section {
-        text-align: center;
-        padding: 5px;
-        font-weight: bold;
-    }
-    .wallet-container {
-        width: 60%;
-        margin: 0 auto 0 auto;
-        padding: 10px;
-    }
-    .wallet {
-        width: 95%;
-        border: 1px solid black;
-        margin: 10px;
-        padding: 5px;
-    }
-
-    .wallet h2 {
-        padding: 0px;
-        margin: 0px;
-        margin-bottom: 10px
-    }
-    .wallet-address-details {
-        border: 1px solid gray;
-        margin-top: 3px;
-    }
-    .reload-wallet-price {
-        text-decoration: none;
-    }
-    a.reload-wallet-price:hover {
-        color: red;
-    }
-    .spinner {
-        display: none;
-    }
-
-    th {
-        text-align: right
-    }
-
-    .no-private-key {
-        color: red;
-    }
-
-    .wallet-value {
-        font-size: x-large;
-    }
-    .fiat-exchange {
-        font-size: x-large;
-    }
-    .fiat-value {
-        font-size: x-large;
-    }
-    .help {
-        font-size: small;
-    }
-    /* currency specific styles */
-
-    .wallet-ltc {
-        background: silver;
-    }
-    .wallet-btc {
-        background: gold
-    }
-    .wallet-ftc {
-        background: cyan;
-    }
-    .wallet-doge {
-        background: yellow;
-    }
-    .wallet-ppc {
-        background: pink;
-    }
-    .wallet-vtc {
-        background: lime;
-    }
-    .wallet-nxt {
-        background: violet;
-    }
-</style>
-
+{% block extra_head %}
+<link rel="stylesheet" type="text/css" href="/static/wallet.css">
 <script src="/static/jquery.jsqrcode.min.js"></script>
 <script src="/static/jsqrcode/grid.js"></script>
 <script src="/static/jsqrcode/version.js"></script>
@@ -145,7 +21,9 @@
 <script src="/static/jsqrcode/findpat.js"></script>
 <script src="/static/jsqrcode/alignpat.js"></script>
 <script src="/static/jsqrcode/databr.js"></script>
+{% endblock %}
 
+{% block content %}
 <div class="wallet-container">
     <h1 class="logo">CoinStove</h1>
     <h1 class='overall_total'>
@@ -153,7 +31,6 @@
         <span id="total-fiat-amount"></span>
         <span class="fiat_currency">USD</span>
     </h1>
-
     <div style="clear: both;"></div>
     <hr>
 
@@ -225,23 +102,31 @@
                         <span class="error"></span>
                     </td>
                 </tr>
+                <tr>
+                    <th>
+                        Transactions (<span class="tx-count">0</span>):
+                    </th>
+                    <td>
+                        <a href="#" class="show-transactions" data-wallet-id="{{ wallet.js_id }}">Show Transactions</a>
+                        <img class="spinner transaction-spinner" src="/static/spinner16.gif" height="16" width="16">
+                        <div class='transaction-container'></div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Send Money:
+                    </th>
+                    <td>
+                    {% if wallet.has_private_key %}
+                        <button>Create Transaction / Send Money</button>
+                    {% else %}
+                        <button>Import Private Key</button><br>
+                        <em>You cannot send money from this address until a private key has been imported.</em>
+                    {% endif %}
+                    </td>
+                </tr>
             </table>
             {% endfor %}
-
-            <hr>
-
-            {% if wallet.has_private_key %}
-                <button>Create Transaction / Send Money</button>
-            {% else %}
-                <button>Import Private Key</button><br>
-                <em>You cannot send money from this address until a private key has been imported.</em>
-            {% endif %}
-
-            <hr>
-
-            <a href="#" class="show-transactions" data-wallet-id="{{ wallet.js_id }}">Show Transactions</a>
-            <img class="spinner transaction-spinner" src="/static/spinner16.gif" height="16" width="16">
-            <div class='transaction-container'></div>
         </div>
     {% endfor %}
 </div>

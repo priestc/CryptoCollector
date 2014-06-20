@@ -1,9 +1,16 @@
+function numberWithCommas(x) {
+    var parts = x.toString().split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+}
+
 function update_overall_fiat_total() {
     // Get the totals from each wallet and add them up.
     // Stick that number into the DOM.
     var total = 0;
     $(".fiat-value").each(function(i, element) {
-        total += Number($(element).html())
+        var number_with_commas = $(element).html();
+        total += Number(number_with_commas.replace(",", ''))
     });
 
     $("#total-fiat-amount").html(total.toLocaleString());
@@ -14,14 +21,17 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
     // Updates the wallet, exchange, and fiat value.
     var exchange = data.fiat_exchange;
     if(exchange > 1) {
-        exchange = exchange.toPrecision(5);
+        exchange = numberWithCommas(exchange.toPrecision(5));
     } else {
         exchange = exchange.toFixed(4);
     }
 
-    $("#" + wallet_id + " .wallet-value").html(data.wallet_value.toLocaleString());
-    $("#" + wallet_id + " .fiat-exchange").html(exchange.toLocaleString());
-    $("#" + wallet_id + " .fiat-value").html(data.fiat_value.toFixed(2).toLocaleString());
+    var fiat_value = numberWithCommas(data.fiat_value.toFixed(2));
+    var wallet_value = numberWithCommas(data.wallet_value);
+
+    $("#" + wallet_id + " .wallet-value").html(wallet_value);
+    $("#" + wallet_id + " .fiat-exchange").html(exchange);
+    $("#" + wallet_id + " .fiat-value").html(fiat_value);
 }
 
 $(function() {
@@ -31,7 +41,6 @@ $(function() {
 
     $(".show-transactions").click(function(event) {
         // Get transactions from backend, then plug them into the DOM.
-        //
         event.preventDefault()
         var show_transaction = $(this);
         var wallet_id = show_transaction.data("wallet-id");
