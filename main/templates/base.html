@@ -3,25 +3,31 @@
     <head>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <style>
-            #contrib-messages {
-                border:0px solid #C8DCC2;
-                margin:1em 0;
-                padding: 2em;
+            #contrib-messages li {
+                margin: 1em 0;
+                padding: 1em;
+                border-style: solid;
+                border-width: 3px;
             }
-            #contrib-messages li {padding: 2em; list-style: none;}
+            #contrib-messages li {padding: 1em; list-style: none;}
 
             #contrib-messages .debug{ background: #EEFAEA; }
             #contrib-messages .info{ background: #EEFAEA; }
             #contrib-messages .success{ background: #EEFAEA; }
             #contrib-messages .warning{ background: #FF3333; }
-            #contrib-messages .error{ background: #FF3333; }
+            #contrib-messages .error{
+                background: #f0aca5;
+                border-color: red
+            }
         </style>
     </head>
     <body>
     {% if messages %}
     <ul id="contrib-messages">
         {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+            <strong>{{ message.level }}</strong> - {{ message }}
+        </li>
         {% endfor %}
     </ul>
     {% endif %}

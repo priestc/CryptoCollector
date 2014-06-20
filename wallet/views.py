@@ -20,7 +20,7 @@ def wallets(request):
             except NotImplementedError:
                 curr = form.cleaned_data['type'].upper()
                 messages.error(request, "Can't create wallets of type %s yet" % curr)
-
+                
     wallets = {}
     for symbol, Wallet in wallet_classes.items():
         wallets[symbol] = Wallet.objects.filter(owner__id=request.user.id)
