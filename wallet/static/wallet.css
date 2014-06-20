@@ -62,9 +62,14 @@ h1.logo {
     margin: 0px;
     margin-bottom: 10px
 }
-.wallet-address-details {
-    border: 1px solid gray;
-    margin-top: 3px;
+table.wallet-address-details {
+    border: 0px solid #a5a5a5;
+    width: 90%;
+    margin: 10px auto 0 auto;
+}
+table.wallet-address-details td {
+    border: 0px solid #a5a5a5;
+    padding: 6px;
 }
 .reload-wallet-price {
     text-decoration: none;
@@ -77,7 +82,8 @@ a.reload-wallet-price:hover {
 }
 
 th {
-    text-align: right
+    text-align: right;
+    width: 9em;
 }
 
 .no-private-key {

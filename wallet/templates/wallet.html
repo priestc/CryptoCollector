@@ -40,6 +40,7 @@
         <div class="wallet wallet-{{ wallets.0.symbol|lower }}">
             <h2>{{ wallets.0.symbol }} - {{ wallets.0.full_name }}</h2>
             {% for wallet in wallets %}
+            <hr>
             <table class="wallet-address-details" id="{{ wallet.js_id }}">
                 <tr>
                     <th>Name:</th>
