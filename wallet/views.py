@@ -1,5 +1,5 @@
 import json
-from collections import defaultdict
+from collections import OrderedDict
 
 from django.template.response import TemplateResponse
 from django.http import HttpResponse
@@ -21,10 +21,10 @@ def wallets(request):
                 curr = form.cleaned_data['type'].upper()
                 messages.error(request, "Can't create wallets of type %s yet" % curr)
 
-    wallets = {}
+    wallets = OrderedDict()
     for symbol, Wallet in wallet_classes.items():
         wallets[symbol] = Wallet.objects.filter(owner__id=request.user.id)
-
+    
     return TemplateResponse(request, 'wallet.html', {
         'wallets_for_all_currencies': wallets,
         'new_wallet_form': form,

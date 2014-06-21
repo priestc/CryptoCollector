@@ -1,6 +1,7 @@
 import json
 import datetime
 from functools import wraps
+from collections import OrderedDict
 
 import requests
 from django.db import models
@@ -328,12 +329,12 @@ class NextWallet(CryptoWallet):
         return float(response.json()['price'])
 
 
-wallet_classes = {
-    'btc': BitcoinWallet,
-    'ltc': LitecoinWallet,
-    'ppc': PeercoinWallet,
-    'nxt': NextWallet,
-    'ftc': FeathercoinWallet,
-    'vtc': VertcoinWallet,
-    'doge': DogecoinWallet,
-}
+wallet_classes = OrderedDict((
+    ('btc', BitcoinWallet),
+    ('ltc', LitecoinWallet),
+    ('doge', DogecoinWallet),
+    ('vtc', VertcoinWallet),
+    ('ppc', PeercoinWallet),
+    ('nxt', NextWallet),
+    ('ftc', FeathercoinWallet),
+))

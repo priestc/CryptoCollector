@@ -84,7 +84,7 @@ function make_tx_html(transaction, cardinal) {
     } else {
         var verb = "Received";
     }
-    console.log(amount, verb);
+
     return String.format(
         "<tr class='transaction'>" +
             "<td>{0}</td>" +
@@ -167,7 +167,6 @@ $(function() {
         // Make ajax call to get the private key from the server.
         // This is done to prevent private keys from being accidently stolen.
         event.preventDefault();
-        //debugger;
         var modal = $(this).prev();
         var js_id = $(this).data('js-id');
 
@@ -175,7 +174,6 @@ $(function() {
             url: "/wallets/get_private_key/",
             data: {js_id: js_id},
         }).success(function(private_key){
-            console.log("returned private key");
             modal.find(".modal-contents").qrcode(private_key);
             modal.find(".modal-bottom-section").text(private_key);
             modal.bPopup();

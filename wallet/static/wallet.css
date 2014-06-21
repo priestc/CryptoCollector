@@ -64,12 +64,24 @@ h1.logo {
 }
 table.wallet-address-details {
     border: 0px solid #a5a5a5;
-    width: 90%;
+    width: 100%;
     margin: 10px auto 0 auto;
 }
 table.wallet-address-details td {
     border: 0px solid #a5a5a5;
     padding: 6px;
+    vertical-align: top;
+    border: 1px solid gray
+}
+table.wallet-address-details th {
+    text-align: right;
+    width: 9em;
+    padding: 6px;
+    vertical-align: top;
+    border: 1px solid gray
+}
+table.wallet-address-details td.balance {
+    line-height: 35px;
 }
 .reload-wallet-price {
     text-decoration: none;
@@ -79,12 +91,6 @@ a.reload-wallet-price:hover {
 }
 .spinner {
     display: none;
-}
-
-th {
-    text-align: right;
-    width: 9em;
-    vertical-align: top;
 }
 
 .no-private-key {
