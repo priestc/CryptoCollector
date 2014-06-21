@@ -206,8 +206,9 @@ $(function() {
         function() {
             video.photobooth().on("image", function(event, dataUrl) {
                 qrCodeDecoder(dataUrl);
-            }
+            });
         });
+
         showInfo = function(data) {
             console.log("from showInfo", data);
         }
