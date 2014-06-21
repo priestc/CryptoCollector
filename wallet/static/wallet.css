@@ -159,3 +159,7 @@ a.reload-wallet-price:hover {
 .transaction .verb {
     text-align: center;
 }
+.video {
+    width: 400px;
+    height: 400px
+}

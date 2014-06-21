@@ -65,7 +65,16 @@
                             </div>
                             <a href="#" class="launch-private-qr-modal" data-js-id="{{ wallet.js_id }}">click to show</a>
                         {% else %}
-                            <button>Import Private Key</button>
+                            <div class="import-public-key-modal modal">
+                                <div class='modal-title'>{{ wallet.name }} Public key import</div>
+                                <div class="modal-top-section">
+                                </div>
+                                <div class="modal-contents">
+                                    <div class="video"></div>
+                                </div>
+                                <div class="modal-bottom-section"></div>
+                            </div>
+                            <button class="launch-import-private-key-modal" data-js-id="{{ wallet.js_id }}">Import Private Key</button>
                         {% endif %}
                     </td>
                 </tr>

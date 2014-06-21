@@ -194,4 +194,24 @@ $(function() {
 
     });
 
+    $('.launch-import-private-key-modal').click(function(event) {
+        event.preventDefault();
+        var modal = $(this).prev();
+        var video = modal.find('.video');
+        var js_id = $(this).data('js-id');
+
+        modal.bPopup({onClose: function() {
+            video.data("photobooth").destroy();
+        }},
+        function() {
+            video.photobooth().on("image", function(event, dataUrl) {
+                qrCodeDecoder(dataUrl);
+            }
+        });
+        showInfo = function(data) {
+            console.log("from showInfo", data);
+        }
+        qrcode.callback = showInfo;
+    });
+
 });
