@@ -24,7 +24,7 @@ def wallets(request):
     wallets = OrderedDict()
     for symbol, Wallet in wallet_classes.items():
         wallets[symbol] = Wallet.objects.filter(owner__id=request.user.id)
-    
+
     return TemplateResponse(request, 'wallet.html', {
         'wallets_for_all_currencies': wallets,
         'new_wallet_form': form,
@@ -36,10 +36,19 @@ def get_transactions(request):
     Called by front end browser ajax, returns JSON.
     """
     symbol, pk = request.GET['js_id'].split('-')
+    fiat_symbol = request.GET.get('fiat', 'usd')
     wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
         owner__id=request.user.id
     ).get()
-    j = json.dumps(wallet.get_transactions())
+    transactions = wallet.get_transactions()
+    j = json.dumps([
+        {
+            'txid': tx.txid,
+            'historical_price': tx.historical_price(fiat_symbol),
+            'amount': tx.amount,
+            'date': tx.date.isoformat(),
+        } for tx in transactions
+    ])
     return HttpResponse(j, content_type="application/json")
 
 def get_value(request):

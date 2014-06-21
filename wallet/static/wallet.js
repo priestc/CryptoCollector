@@ -75,9 +75,10 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
 }
 
 function make_tx_html(transaction, cardinal) {
-    var time_utc = new Date(transaction['time_utc']);
+    var time_utc = new Date(transaction['date']);
     var amount = Number(transaction['amount']);
-    var txid = transaction['tx'];
+    var txid = transaction['txid'];
+    var historical_price = transaction['historical_price'];
 
     if(amount < 0) {
         var verb = 'Sent';
@@ -94,8 +95,10 @@ function make_tx_html(transaction, cardinal) {
             "</td>" +
             "<td class='verb {3}'>{3}</td>" +
             "<td class='amount'>{4}</td>" +
+            "<td class='historical-price'>({5} USD)</td>" +
         "</tr>",
-        cardinal, time_utc.toDateString(), timeSince(time_utc), verb, Math.abs(amount)
+        cardinal, time_utc.toDateString(), timeSince(time_utc), verb,
+        Math.abs(amount), historical_price
     )
 }
 
@@ -115,7 +118,10 @@ $(function() {
 
         $.ajax({
             url: "/wallets/transactions",
-            data: {js_id: wallet_id},
+            data: {
+                js_id: wallet_id,
+                fiat: 'usd',
+            },
         }).success(function(transactions) {
             $.each(transactions.reverse(), function(i, transaction) {
                 html = make_tx_html(transaction, i + 1);

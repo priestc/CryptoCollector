@@ -1,9 +1,11 @@
+import calendar
 import json
 import datetime
 from functools import wraps
 from collections import OrderedDict
 
 import requests
+import arrow
 from django.db import models
 from django.core.cache import cache
 
@@ -131,6 +133,26 @@ def bypassable_cache(func):
         return ret
     return lil_wayne
 
+class Transaction(object):
+    """
+    Like a model class, but not a django model because transactions are
+    always sourced from external data sources. All cryptocurrencies will use this
+    class for handling transactions.
+    """
+    crypto_symbol = 'btc'
+    cardinal = '1' # first, second, third transaction for an address... expressed as int
+    txid = '' # long hash that this tx is indexed by in the blockchain
+    amount = 0.0 # positive float for recieved transaction, negative for send
+    other_address = '' # either the sender or the recipient's public key/address
+    confirmations = ''
+    date = '' # date of transaction
+
+    def historical_price(self, fiat_symbol):
+        return HistoricalPrice.get_value(
+            self.date, self.crypto_symbol, fiat_symbol
+        )
+
+
 
 class BitcoinWallet(CryptoWallet):
     symbol = 'BTC'
@@ -160,11 +182,40 @@ class BitcoinWallet(CryptoWallet):
         """
         raise NotImplementedError()
 
-    @bypassable_cache
+    @classmethod
+    def get_historical_price(self, date, fiat_symbol='usd'):
+        url = "http://api.bitcoincharts.com/v1/trades.csv?symbol=%s&start=%s&end=%s"
+        timestamp = calendar.timegm(date.timetuple())
+
+        if fiat_symbol == 'usd':
+            source = 'bitstampUSD'
+            url = url % (source, str(timestamp), str(timestamp + 3600))
+
+        response = requests.get(url)
+        csv = response.content
+        import debug
+        first_line = csv.split('\n')[0]
+        timestamp, price, volume = first_line.split(",")
+
+        print url, date, timestamp, price
+
+        return price, source
+
+    #@bypassable_cache
     def get_transactions(self):
         url = 'http://btc.blockr.io/api/v1/address/txs/' + self.public_key
         response = requests.get(url)
-        return response.json()['data']['txs']
+        txs = response.json()['data']['txs']
+        transactions = []
+        for tx in txs:
+            t = Transaction()
+            t.date = arrow.get(tx['time_utc']).datetime
+            t.amount = tx['amount']
+            t.crypto_symbol = 'btc'
+            t.txid = tx['tx']
+            t.confirmations = tx['confirmations']
+            transactions.append(t)
+        return transactions
 
 
 class LitecoinWallet(CryptoWallet):
@@ -338,3 +389,51 @@ wallet_classes = OrderedDict((
     ('nxt', NextWallet),
     ('ftc', FeathercoinWallet),
 ))
+
+class HistoricalPrice(models.Model):
+    crypto_symbol = models.CharField(max_length=8)
+    fiat_symbol = models.CharField(max_length=8)
+    when = models.DateTimeField()
+    price = models.FloatField()
+    source = models.CharField(max_length=64)
+
+    def __unicode__(self):
+        return "{}:{:%d, %b %Y}:{}".format(self.source, self.when, self.price)
+
+    @classmethod
+    def fetch(cls, when, crypto_symbol='btc', fiat_symbol='usd'):
+        """
+        Get the appropriate Wallet model and call it's get_historical
+        method. That method will then call an external data source.
+        The results are then returned and stored for later use.
+        """
+        Wallet = wallet_classes[crypto_symbol]
+        price, source = Wallet.get_historical_price(when, fiat_symbol=fiat_symbol)
+        obj = cls.objects.create(
+            fiat_symbol=fiat_symbol,
+            crypto_symbol=crypto_symbol,
+            when=when,
+            source=source,
+            price=price
+        )
+        return obj
+
+    @classmethod
+    def get_value(cls, when, crypto_symbol='btc', fiat_symbol='usd'):
+        """
+        This function is the primary interface to the historical price
+        system. It first tries the database, if no match, it calls the
+        correct external source (such as bitcoincharts.com).
+        """
+        d = datetime.timedelta(hours=1)
+        historical_price = cls.objects.filter(
+            crypto_symbol=crypto_symbol,
+            fiat_symbol=fiat_symbol,
+            when__range=[when-d, when+d]
+        )
+        try:
+            obj = historical_price[0]
+        except IndexError:
+            obj = cls.fetch(when, crypto_symbol=crypto_symbol, fiat_symbol=fiat_symbol)
+
+        return obj.price, obj.source
