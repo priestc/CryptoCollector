@@ -50,7 +50,7 @@ function update_overall_fiat_total() {
     var total = 0;
     $(".fiat-value").each(function(i, element) {
         var number_with_commas = $(element).html();
-        total += Number(number_with_commas.replace(",", ''))
+        total += Number(number_with_commas.replace(",", ''));
     });
 
     $("#total-fiat-amount").html(total.toLocaleString());
@@ -84,7 +84,7 @@ function make_tx_html(transaction, cardinal) {
     var h_price = historical[0];
     var h_source = historical[1];
     var abs_amount = Math.abs(amount);
-    var source = h_source + ': ' + h_price
+    var source = h_source + ': ' + h_price;
 
     if(amount < 0) {
         var verb = 'Sent';
@@ -105,7 +105,7 @@ function make_tx_html(transaction, cardinal) {
         "</tr>",
         cardinal, time_utc.toDateString(), timeSince(time_utc), verb,
         abs_amount.toFixed(4), numberWithCommas((h_price * abs_amount).toFixed(2)), source
-    )
+    );
 }
 
 $(function() {
@@ -115,7 +115,7 @@ $(function() {
 
     $(".show-transactions").click(function(event) {
         // Get transactions from backend, then plug them into the DOM.
-        event.preventDefault()
+        event.preventDefault();
         var show_transaction = $(this);
         var wallet_id = show_transaction.data("wallet-id");
         var spinner = show_transaction.next();
@@ -153,7 +153,7 @@ $(function() {
         $("#overall-spinner").show();
 
         $.ajax({
-            url: "/wallet/value",
+            url: "/wallets/value",
             data: {js_id: wallet_id}
         }).success(function(data) {
             // returned will be new totals for this wallet
