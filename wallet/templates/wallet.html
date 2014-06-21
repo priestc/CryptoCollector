@@ -81,7 +81,7 @@
                             </div>
                             <a href="#" class="launch-private-qr-modal" data-js-id="{{ wallet.js_id }}">click to show</a>
                         {% else %}
-                            <span class='no-private-key private-key'>Not present</span>
+                            <button>Import Private Key</button>
                         {% endif %}
                     </td>
                 </tr>
@@ -121,7 +121,6 @@
                     {% if wallet.has_private_key %}
                         <button>Create Transaction / Send Money</button>
                     {% else %}
-                        <button>Import Private Key</button><br>
                         <em>You cannot send money from this address until a private key has been imported.</em>
                     {% endif %}
                     </td>

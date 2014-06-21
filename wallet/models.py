@@ -148,10 +148,13 @@ class Transaction(object):
     date = '' # date of transaction
 
     def historical_price(self, fiat_symbol):
+        """
+        Using the local cache, get the fiat price at the time of
+        transaction.
+        """
         return HistoricalPrice.get_value(
             self.date, self.crypto_symbol, fiat_symbol
         )
-
 
 
 class BitcoinWallet(CryptoWallet):
@@ -184,24 +187,12 @@ class BitcoinWallet(CryptoWallet):
 
     @classmethod
     def get_historical_price(self, date, fiat_symbol='usd'):
-        url = "http://api.bitcoincharts.com/v1/trades.csv?symbol=%s&start=%s&end=%s"
-        timestamp = calendar.timegm(date.timetuple())
-
-        if fiat_symbol == 'usd':
-            source = 'bitstampUSD'
-            url = url % (source, str(timestamp), str(timestamp + 3600))
-
+        url = "http://localhost:9000/price_for_date?fiat=%s&crypto=btc&date=%s"
+        url = url % (fiat_symbol, date.isoformat())
         response = requests.get(url)
-        csv = response.content
-        import debug
-        first_line = csv.split('\n')[0]
-        timestamp, price, volume = first_line.split(",")
+        return response.json()
 
-        print url, date, timestamp, price
-
-        return price, source
-
-    #@bypassable_cache
+    @bypassable_cache
     def get_transactions(self):
         url = 'http://btc.blockr.io/api/v1/address/txs/' + self.public_key
         response = requests.get(url)
@@ -244,11 +235,28 @@ class LitecoinWallet(CryptoWallet):
         keypair = LitecoinKeypair()
         return keypair.address(), keypair.private_key()
 
+    @classmethod
+    def get_historical_price(self, date, fiat_symbol='usd'):
+        url = "http://localhost:9000/price_for_date?fiat=%s&crypto=ltc&date=%s"
+        url = url % (fiat_symbol, date.isoformat())
+        response = requests.get(url)
+        return response.json()
+
     @bypassable_cache
     def get_transactions(self):
         url = 'http://ltc.blockr.io/api/v1/address/txs/' + self.public_key
         response = requests.get(url)
-        return response.json()['data']['txs']
+        txs = response.json()['data']['txs']
+        transactions = []
+        for tx in txs:
+            t = Transaction()
+            t.date = arrow.get(tx['time_utc']).datetime
+            t.amount = tx['amount']
+            t.crypto_symbol = 'ltc'
+            t.txid = tx['tx']
+            t.confirmations = tx['confirmations']
+            transactions.append(t)
+        return transactions
 
 class DogecoinWallet(CryptoWallet):
     symbol = "DOGE"
@@ -322,7 +330,6 @@ class FeathercoinWallet(CryptoWallet):
     @bypassable_cache
     def get_value(self):
         url= "http://api.feathercoin.com/?output=balance&address=%s&json=1" % self.public_key
-        print url
         response = requests.get(url)
         try:
             return float(response.json()['balance'])

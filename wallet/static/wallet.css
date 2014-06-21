@@ -53,32 +53,36 @@ h1.logo {
 .wallet {
     width: 95%;
     border: 1px solid black;
+    border-radius: 10px;
     margin: 10px;
     padding: 5px;
 }
 
 .wallet h2 {
     padding: 0px;
-    margin: 0px;
-    margin-bottom: 10px
+    margin: 10px 0 10px 0;
 }
 table.wallet-address-details {
     border: 0px solid #a5a5a5;
     width: 100%;
     margin: 10px auto 0 auto;
+    background: rgba(38, 29, 31, 0.35);
+    border-radius: 10px;
 }
 table.wallet-address-details td {
     border: 0px solid #a5a5a5;
     padding: 6px;
     vertical-align: top;
-    border: 1px solid gray
+    border: 1px solid gray;
+    border-radius: 10px;
 }
 table.wallet-address-details th {
     text-align: right;
     width: 9em;
     padding: 6px;
     vertical-align: top;
-    border: 1px solid gray
+    border: 1px solid gray;
+    border-radius: 10px;
 }
 table.wallet-address-details td.balance {
     line-height: 35px;
@@ -144,4 +148,14 @@ a.reload-wallet-price:hover {
 }
 .wallet-nxt {
     background: violet;
+}
+
+.transaction .historical-price {
+    text-align: right;
+}
+.transaction .amount {
+    text-align: right;
+}
+.transaction .verb {
+    text-align: center;
 }

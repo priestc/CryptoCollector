@@ -75,10 +75,16 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
 }
 
 function make_tx_html(transaction, cardinal) {
+    // Make the html for a single transaction.
+    // Th caller of this function need to place it in the DOM.
     var time_utc = new Date(transaction['date']);
     var amount = Number(transaction['amount']);
     var txid = transaction['txid'];
-    var historical_price = transaction['historical_price'];
+    var historical = transaction['historical_price'];
+    var h_price = historical[0];
+    var h_source = historical[1];
+    var abs_amount = Math.abs(amount);
+    var source = h_source + ': ' + h_price
 
     if(amount < 0) {
         var verb = 'Sent';
@@ -95,10 +101,10 @@ function make_tx_html(transaction, cardinal) {
             "</td>" +
             "<td class='verb {3}'>{3}</td>" +
             "<td class='amount'>{4}</td>" +
-            "<td class='historical-price'>({5} USD)</td>" +
+            "<td class='historical-price' title='{6}'>{5} USD</td>" +
         "</tr>",
         cardinal, time_utc.toDateString(), timeSince(time_utc), verb,
-        Math.abs(amount), historical_price
+        abs_amount.toFixed(4), numberWithCommas((h_price * abs_amount).toFixed(2)), source
     )
 }
 
@@ -123,6 +129,7 @@ $(function() {
                 fiat: 'usd',
             },
         }).success(function(transactions) {
+            container.find("tr").remove();
             $.each(transactions.reverse(), function(i, transaction) {
                 html = make_tx_html(transaction, i + 1);
                 container.html(container.html() + html);
