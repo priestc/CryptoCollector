@@ -4,7 +4,24 @@
 {% block extra_head %}
 <link rel="stylesheet" type="text/css" href="/static/wallet.css">
 <script src="/static/jquery.jsqrcode.min.js"></script>
-<script src="/static/photobooth_min.js"></script>
+
+<script src="/static/jsqrcode/grid.js"></script>
+<script src="/static/jsqrcode/version.js"></script>
+<script src="/static/jsqrcode/detector.js"></script>
+<script src="/static/jsqrcode/formatinf.js"></script>
+<script src="/static/jsqrcode/errorlevel.js"></script>
+<script src="/static/jsqrcode/bitmat.js"></script>
+<script src="/static/jsqrcode/datablock.js"></script>
+<script src="/static/jsqrcode/bmparser.js"></script>
+<script src="/static/jsqrcode/datamask.js"></script>
+<script src="/static/jsqrcode/rsdecoder.js"></script>
+<script src="/static/jsqrcode/gf256poly.js"></script>
+<script src="/static/jsqrcode/gf256.js"></script>
+<script src="/static/jsqrcode/decoder.js"></script>
+<script src="/static/jsqrcode/qrcode.js"></script>
+<script src="/static/jsqrcode/findpat.js"></script>
+<script src="/static/jsqrcode/alignpat.js"></script>
+<script src="/static/jsqrcode/databr.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -70,9 +87,15 @@
                                 <div class="modal-top-section">
                                 </div>
                                 <div class="modal-contents">
-                                    <div class="video"></div>
+                                    <video></video>
+                                    <button class='launch-webcam'>Load from QR code</button>
                                 </div>
-                                <div class="modal-bottom-section"></div>
+                                <div class="modal-bottom-section">
+                                    <form method="post">
+                                        <input type="text" name="private-key">
+                                        <input type="submit">
+                                    </form>
+                                </div>
                             </div>
                             <button class="launch-import-private-key-modal" data-js-id="{{ wallet.js_id }}">Import Private Key</button>
                         {% endif %}
@@ -155,6 +178,8 @@
         </form>
     </div>
 </div>
+
+<canvas id="canvas" style="display: none"></canvas>
 
 <script src="/static/jquery.bpopup.min.js"></script>
 <script src="/static/wallet.js"></script>
