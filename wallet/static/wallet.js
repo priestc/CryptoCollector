@@ -233,18 +233,7 @@ $(function() {
         var canvas = $("#canvas")[0];
         var width = 400;
         var height = 400;
-
-        function takepicture() {
-            canvas.width = width;
-            canvas.height = height;
-            canvas.getContext('2d').drawImage(video, 0, 0, width, height);
-            var data = canvas.toDataURL('image/png');
-            qrcode.decode(data);
-        }
-
-        var interval_timer = setInterval(function() {
-            takepicture();
-        }, 1000);
+        var interval_timer;
 
         qrcodeCallback = function(data) {
             // This function gets called whenever the qrdecoder finishes
@@ -254,20 +243,33 @@ $(function() {
                 clearInterval(interval_timer);
                 mediaStream.stop();
                 $(video).hide();
-                modal.find('input[name=private-key]').val(data);
+                modal.find('input[name=private_key]').val(data);
             }
         }
         qrcode.callback = qrcodeCallback;
 
         modal.bPopup(
             {onClose: function() {
-                clearInterval(interval_timer);
-                mediaStream.stop();
+                if(interval_timer) {
+                    clearInterval(interval_timer);
+                }
+                if(mediaStream) {
+                    mediaStream.stop();
+                }
             }},
             function() {
                 modal.find('.launch-webcam').click(function() {
                     $(video).show();
                     initialize_webcam(video);
+                    interval_timer = setInterval(function() {
+                        // Once the qr code video has started, sample the screen every
+                        // second until something can be decoded.
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.getContext('2d').drawImage(video, 0, 0, width, height);
+                        var data = canvas.toDataURL('image/png');
+                        qrcode.decode(data);
+                    }, 1000);
                 });
             }
         );

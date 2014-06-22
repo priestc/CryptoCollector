@@ -4,7 +4,6 @@
 {% block extra_head %}
 <link rel="stylesheet" type="text/css" href="/static/wallet.css">
 <script src="/static/jquery.jsqrcode.min.js"></script>
-
 <script src="/static/jsqrcode/grid.js"></script>
 <script src="/static/jsqrcode/version.js"></script>
 <script src="/static/jsqrcode/detector.js"></script>
@@ -37,7 +36,12 @@
 
     <button id="new-wallet">Create New Wallet</button>
 
+    {% if no_wallets %}
+    <h2 class="no-wallets">No wallets yet, add a wallet from the button above.</h2>
+    {% endif %}
+
     {% for symbol, wallets in wallets_for_all_currencies.items %}
+        {% if wallets %}
         <div class="wallet wallet-{{ wallets.0.symbol|lower }}">
             <h2>{{ wallets.0.symbol }} - {{ wallets.0.full_name }}</h2>
             {% for wallet in wallets %}
@@ -91,9 +95,11 @@
                                     <button class='launch-webcam'>Load from QR code</button>
                                 </div>
                                 <div class="modal-bottom-section">
-                                    <form method="post">
-                                        <input type="text" name="private-key">
-                                        <input type="submit">
+                                    <form method="post" action="/wallets/save_private_key">
+                                        {% csrf_token %}
+                                        <input type="text" name="private_key">
+                                        <input type="hidden" name="js_id" value="{{ wallet.js_id }}">
+                                        <input type="submit" name="submit-private-key">
                                     </form>
                                 </div>
                             </div>
@@ -121,7 +127,7 @@
                 </tr>
                 <tr>
                     <th>
-                        Transactions (<span class="tx-count">0</span>):
+                        Transactions:
                     </th>
                     <td>
                         <a href="#" class="show-transactions" data-wallet-id="{{ wallet.js_id }}">Show Transactions</a>
@@ -131,11 +137,12 @@
                 </tr>
                 <tr>
                     <th>
-                        Send Money:
+                        Actions:
                     </th>
                     <td>
                     {% if wallet.has_private_key %}
-                        <button>Create Transaction / Send Money</button>
+                        <a href="/wallets/paper_wallet/{{ wallet.js_id }}"><button>Generate Paper Wallet</button></a>
+                        <button class="create-transaction" data-js-id="{{ wallet.js_id }}">Create Transaction / Send Money</button>
                     {% else %}
                         <em>You cannot send money from this address until a private key has been imported.</em>
                     {% endif %}
@@ -144,6 +151,7 @@
             </table>
             {% endfor %}
         </div>
+        {% endif %}
     {% endfor %}
 </div>
 

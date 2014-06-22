@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+    body {font-family: 'helvetica'}
+    .wallet {
+        width: 1024px;
+        height: 256px;
+        border: 3px solid black;
+        overflow: hidden;
+    }
+    .qr {
+        width: 256px;
+        height: 256px;
+        border: 0px solid green;
+    }
+    .public-qr {
+        float: left;
+        background: lime;
+    }
+    .private-qr {
+        float: left;
+        background: pink;
+    }
+    .middle-section {
+        height: 256px;
+        width: 512px;
+        float: left;
+        text-align: center;
+    }
+    table {
+        margin: 0 auto 0 auto;
+        border: 1px solid black;
+        width: 90%;
+    }
+    td {
+        border: 1px solid gray;
+    }
+    .key-text {
+        width: 1019px;
+        border: 3px solid black;
+        padding: 3px 0 3px 0;
+    }
+    .private-text {
+        text-align: right;
+        padding-right: 5px;
+    }
+    .public-text {
+        text-align: left;
+        padding-left: 5px;
+    }
+    hr {
+        margin: 20px 0 20px 0;
+    }
+</style>
+<script src="/static/jquery.jsqrcode.min.js"></script>
+
+{% endblock %}
+
+{% block content %}
+    {% for wallet in wallets %}
+    <hr>
+    <div class="public-text key-text">
+        {{ wallet.public_key }} &#x21e6; Public Key (Receive)
+    </div>
+    <div class="wallet" id="{{ wallet.js_id }}">
+        <div class="public-qr qr"></div>
+        <div class="middle-section">
+            <h2>{{ wallet.full_name }} Paper Wallet</h2>
+            <br>
+            <table>
+                <tr>
+                    <td colspan="2">{{ wallet.name }}</td>
+                </tr>
+                <tr>
+                    <td>Mint Date:</td>
+                    <td>{% now "SHORT_DATETIME_FORMAT" %}</td>
+                </tr>
+                <tr>
+                    <td>Balance At Mint:</td>
+                    <td>{{ wallet.get_value }} {{ wallet.symbol }}</td>
+                </tr>
+                <tr>
+                    <td>Fiat Balance At Mint:</td>
+                    <td>{{ wallet.get_fiat_value }} USD</td>
+                </tr>
+            </table>
+        </div>
+        <div class="private-qr qr"></div>
+    </div>
+    <div class="private-text key-text">
+        Private Key (Send) &#x21e8; {{ wallet.private_key }}
+    </div>
+    <script>
+        $("#{{ wallet.js_id }} .public-qr").qrcode("{{ wallet.public_key }}");
+        $("#{{ wallet.js_id }} .private-qr").qrcode("{{ wallet.private_key }}");
+    </script>
+    {% endfor %}
+{% endblock %}

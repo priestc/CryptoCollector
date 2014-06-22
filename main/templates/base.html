@@ -29,7 +29,7 @@
     <ul id="contrib-messages">
         {% for message in messages %}
         <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-            <strong>{{ message.level }}</strong> - {{ message }}
+            <strong>{{ message.level }}</strong> - {{ message|safe }}
         </li>
         {% endfor %}
     </ul>
