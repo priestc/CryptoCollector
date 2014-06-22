@@ -141,7 +141,7 @@
                     </th>
                     <td>
                     {% if wallet.has_private_key %}
-                        <a href="/wallets/paper_wallet/{{ wallet.js_id }}"><button>Generate Paper Wallet</button></a>
+                        <a target="_blank" href="/wallets/paper_wallet?js_id={{ wallet.js_id }}"><button>Generate Paper Wallet</button></a>
                         <button class="create-transaction" data-js-id="{{ wallet.js_id }}">Create Transaction / Send Money</button>
                     {% else %}
                         <em>You cannot send money from this address until a private key has been imported.</em>
