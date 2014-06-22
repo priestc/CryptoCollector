@@ -162,4 +162,9 @@ a.reload-wallet-price:hover {
 
 video {
     width: 400px;
+    display: none
+}
+
+input[name=private-key]{
+    width: 90%;
 }

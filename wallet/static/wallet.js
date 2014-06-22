@@ -254,15 +254,19 @@ $(function() {
                 clearInterval(interval_timer);
                 mediaStream.stop();
                 $(video).hide();
-                modal.find('.modal-bottom-section input').val(data);
+                modal.find('input[name=private-key]').val(data);
             }
         }
         qrcode.callback = qrcodeCallback;
 
         modal.bPopup(
-            {onClose: function() { clearInterval(interval_timer); }},
+            {onClose: function() {
+                clearInterval(interval_timer);
+                mediaStream.stop();
+            }},
             function() {
                 modal.find('.launch-webcam').click(function() {
+                    $(video).show();
                     initialize_webcam(video);
                 });
             }
