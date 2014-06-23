@@ -71,9 +71,8 @@ def get_value(request):
         owner__id=request.user.id
     ).get()
     res = {
-        'fiat_exchange': wallet.get_fiat_exchange(hard_refresh=True),
+        'fiat_exchange': wallet.get_fiat_exchange('usd', hard_refresh=True),
         'wallet_value': wallet.get_value(hard_refresh=True),
-        'fiat_value': wallet.get_fiat_value(),
     }
     return HttpResponse(json.dumps(res), content_type="application/json")
 

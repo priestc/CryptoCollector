@@ -45,7 +45,7 @@ class CryptoWallet(models.Model):
         """
         return "%s-%s" % (self.symbol.lower(), self.pk)
 
-    def get_fiat_value(self, currency='usd'):
+    def get_fiat_value(self, fiat='usd'):
         """
         Multiply a crypto amunt by the returned number to get the value of that
         crypto amount in local currency. For instance a bitcoin wallet with
@@ -55,7 +55,7 @@ class CryptoWallet(models.Model):
         >>> 2.3 * fiat_conversion
         1894.4 # 2.3 bitcoins == 1894.4 USD
         """
-        return self.get_value() * self.get_fiat_exchange(currency)
+        return self.get_value() * self.get_fiat_exchange(fiat)
 
     def get_value(self):
         """
@@ -79,6 +79,13 @@ class CryptoWallet(models.Model):
         address.
         """
         raise NotImplementedError()
+
+    @classmethod
+    def get_historical_price(self, date, fiat_symbol='usd'):
+        url = "http://coinsentry.pw/price_for_date?fiat=%s&crypto=%s&date=%s"
+        url = url % (fiat_symbol, self.symbol, date.isoformat())
+        response = requests.get(url)
+        return response.json()
 
     @classmethod
     def get_fiat_exchange(cls, currency='usd'):
@@ -113,18 +120,18 @@ def bypassable_cache(func):
         key = key.replace(' ', '') # to avoid bug in memcached
 
         if bypass_cache:
-            #print "bypass", key
+            print "bypass", key
             return func(*args, **kwargs)
 
         if hard_refresh:
             ret = func(*args, **kwargs)
             cache.set(key, ret)
-            #print "hard refresh", key
+            print "hard refresh", key
             return ret
 
         hit = cache.get(key)
         if hit is not None:
-            #print "return hit", key
+            print "return hit", key
             return hit
 
         print "hitting because of a miss", key
@@ -185,13 +192,6 @@ class BitcoinWallet(CryptoWallet):
         """
         raise NotImplementedError()
 
-    @classmethod
-    def get_historical_price(self, date, fiat_symbol='usd'):
-        url = "http://localhost:9000/price_for_date?fiat=%s&crypto=btc&date=%s"
-        url = url % (fiat_symbol, date.isoformat())
-        response = requests.get(url)
-        return response.json()
-
     @bypassable_cache
     def get_transactions(self):
         url = 'http://btc.blockr.io/api/v1/address/txs/' + self.public_key
@@ -235,13 +235,6 @@ class LitecoinWallet(CryptoWallet):
         keypair = LitecoinKeypair()
         return keypair.address(), keypair.private_key()
 
-    @classmethod
-    def get_historical_price(self, date, fiat_symbol='usd'):
-        url = "http://localhost:9000/price_for_date?fiat=%s&crypto=ltc&date=%s"
-        url = url % (fiat_symbol, date.isoformat())
-        response = requests.get(url)
-        return response.json()
-
     @bypassable_cache
     def get_transactions(self):
         url = 'http://ltc.blockr.io/api/v1/address/txs/' + self.public_key
@@ -283,6 +276,23 @@ class DogecoinWallet(CryptoWallet):
     def generate_new_keypair(cls):
         keypair = DogecoinKeypair()
         return keypair.address(), keypair.private_key()
+
+    def get_transactions(self):
+        url = "https://chain.so/api/v2/get_tx_unspent/DOGE/"
+        response = requests.get(url + self.public_key)
+        import debug
+        txs = response.json()['data']['txs']
+        transactions = []
+        for tx in txs:
+            t = Transaction()
+            t.date = arrow.get(tx['time_utc']).datetime
+            t.amount = tx['amount']
+            t.crypto_symbol = 'ltc'
+            t.txid = tx['tx']
+            t.confirmations = tx['confirmations']
+            transactions.append(t)
+        return transactions
+
 
 class PeercoinWallet(CryptoWallet):
     symbol = "PPC"
@@ -359,6 +369,13 @@ class VertcoinWallet(CryptoWallet):
         url = "https://explorer.vertcoin.org/chain/Vertcoin/q/addressbalance/"
         response = requests.get(url + self.public_key)
         return float(response.content)
+
+    @classmethod
+    def get_historical_price(self, date, fiat_symbol='usd'):
+        url = "http://coinsentry.pw/price_for_date?fiat=%s&crypto=vtc&date=%s"
+        url = url % (fiat_symbol, date.isoformat())
+        response = requests.get(url)
+        return response.json()
 
     @classmethod
     @bypassable_cache

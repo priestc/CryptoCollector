@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if not user.is_authenticated %}
+<form method="post">
+Username: <input type="text">
+Password: <input type="text">
+<input type="button">
+</form>
+{% endif %}
+
+{% endblock %}

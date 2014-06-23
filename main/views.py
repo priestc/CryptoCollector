@@ -1,5 +1,7 @@
-from django.shortcuts import render
+from django.template.response import TemplateResponse
 
 # Create your views here.
 def home(request):
-    pass
+    return TemplateResponse(request, "home.html", {
+        'context': 'dasd'
+    })

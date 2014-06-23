@@ -63,14 +63,14 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
     // from a dict of new prices for a wallet, update the DOM
     // gets called after ajax call to get updated price.
     // Updates the wallet, exchange, and fiat value.
-    var exchange = data.fiat_exchange;
-    if(exchange > 1) {
-        exchange = numberWithCommas(exchange.toPrecision(5));
+    var num_exchange = Number(data.fiat_exchange);
+    if(num_exchange > 1) {
+        var exchange = numberWithCommas(num_exchange.toPrecision(5));
     } else {
-        exchange = exchange.toFixed(4);
+        var exchange = num_exchange.toFixed(4);
     }
 
-    var fiat_value = numberWithCommas(data.fiat_value.toFixed(2));
+    var fiat_value = numberWithCommas((num_exchange * data.wallet_value).toFixed(2));
     var wallet_value = numberWithCommas(data.wallet_value);
 
     $("#" + wallet_id + " .wallet-value").html(wallet_value);
@@ -192,7 +192,7 @@ $(function() {
             update_DOM_with_price_for_wallet(wallet_id, data);
             update_overall_fiat_total();
         }).error(function(response) {
-            wallet.find('.error').html("oh snap!! error!! " + response.responseText);
+            wallet.find('.error').html("<pre>" + response.responseText + "</pre>");
         }).complete(function() {
             spinner.hide();
             $("#overall-spinner").hide();
