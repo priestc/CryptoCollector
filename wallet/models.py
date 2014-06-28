@@ -87,6 +87,7 @@ class CryptoWallet(models.Model):
         url = "http://coinsentry.pw/price_for_date?fiat=%s&crypto=%s&date=%s"
         url = url % (fiat_symbol, self.symbol, date.isoformat())
         response = requests.get(url)
+        print url, response.content
         return response.json()
 
     @classmethod
@@ -179,7 +180,9 @@ class BitcoinWallet(CryptoWallet):
 
     @classmethod
     @bypassable_cache
-    def get_fiat_exchange(cls, currency='usd'):
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        if fiat_symbol != 'usd':
+            raise NotImplementedError("USD for BTC only")
         response = requests.get("https://coinbase.com/api/v1/prices/spot_rate")
         return float(response.json()['amount'])
 
@@ -227,8 +230,8 @@ class LitecoinWallet(CryptoWallet):
 
     @classmethod
     @bypassable_cache
-    def get_fiat_exchange(cls, currency='usd'):
-        url = "https://btc-e.com/api/2/ltc_%s/ticker" % currency
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        url = "https://btc-e.com/api/2/ltc_%s/ticker" % fiat_symbol
         response = requests.get(url)
         return float(response.json()['ticker']['avg'])
 
@@ -266,9 +269,9 @@ class DogecoinWallet(CryptoWallet):
 
     @classmethod
     @bypassable_cache
-    def get_fiat_exchange(cls, currency='usd'):
-        url = "https://www.dogeapi.com/wow/v2/?a=get_current_price&convert_to=USD&amount_doge=1"
-        response = requests.get(url)
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        url = "https://www.dogeapi.com/wow/v2/?a=get_current_price&convert_to=%s&amount_doge=1"
+        response = requests.get(url % fiat_symbol.upper())
         return float(response.json()['data']['amount'])
 
     def send_to_address(self, address, amount):
@@ -280,17 +283,31 @@ class DogecoinWallet(CryptoWallet):
         return keypair.address(), keypair.private_key()
 
     def get_transactions(self):
+        """
+        This is what gets returned and iterated over from chain.so
+        [
+            {
+             u'script_hex': u'76a91425877fec61fa9f74592ccfc43cd7430862171fd588ac',
+             u'script_asm': u'OP_DUP OP_HASH160 25877fec61fa9f74592ccfc43cd7430862171fd5 OP_EQUALVERIFY OP_CHECKSIG',
+             u'value': u'98995.00000000',
+             u'txid': u'b6bd31a9d4db7a6d54a64086a0a51432336fb18338bece3f8382faa79728fbfc',
+             u'confirmations': 16424,
+             u'time': 1402876124,
+             u'output_no': 1
+            }
+        ]
+        """
         url = "https://chain.so/api/v2/get_tx_unspent/DOGE/"
         response = requests.get(url + self.public_key)
-        import debug
+
         txs = response.json()['data']['txs']
         transactions = []
         for tx in txs:
             t = Transaction()
-            t.date = arrow.get(tx['time_utc']).datetime
-            t.amount = tx['amount']
-            t.crypto_symbol = 'ltc'
-            t.txid = tx['tx']
+            t.date = arrow.get(tx['time']).datetime
+            t.amount = tx['value']
+            t.crypto_symbol = 'doge'
+            t.txid = tx['txid']
             t.confirmations = tx['confirmations']
             transactions.append(t)
         return transactions
@@ -312,16 +329,10 @@ class PeercoinWallet(CryptoWallet):
 
     @classmethod
     @bypassable_cache
-    def get_fiat_exchange(cls, currency='usd'):
-        url = "http://ppc.blockr.io/api/v1/coin/info"
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        url="http://www.cryptocoincharts.info/v2/api/tradingPair/ppc_%s" % fiat_symbol
         response = requests.get(url)
-        btce = float(response.json()['data']['markets']['btce']['value'])
-
-        url = 'http://ppc.blockr.io/api/v1/exchangerate/current'
-        response = requests.get(url)
-        btc = float(response.json()['data'][0]['rates']['BTC'])
-
-        return btce * (1 / btc )
+        return float(response.json()['price'])
 
     @classmethod
     def generate_new_keypair(cls):
@@ -330,9 +341,31 @@ class PeercoinWallet(CryptoWallet):
 
     @bypassable_cache
     def get_transactions(self):
+        """
+        [
+            {
+             u'time_utc': u'2014-06-16T00:07:10Z',
+             u'amount': 103.98,
+             u'confirmations': 2152,
+             u'amount_multisig': 0,
+             u'tx': u'6dddc4deb0806d987844b429e73b20ce5f0355407cce220130b5eac8fa13970e'
+            }
+        ]
+        """
         url = 'http://ppc.blockr.io/api/v1/address/txs/' + self.public_key
         response = requests.get(url)
-        return response.json()['data']['txs']
+        txs = response.json()['data']['txs']
+        import debug
+        transactions = []
+        for tx in txs:
+            t = Transaction()
+            t.date = arrow.get(tx['time_utc']).datetime
+            t.amount = tx['amount']
+            t.crypto_symbol = 'ppc'
+            t.txid = tx['tx']
+            t.confirmations = tx['confirmations']
+            transactions.append(t)
+        return transactions
 
 class FeathercoinWallet(CryptoWallet):
     symbol = 'FTC'
@@ -350,10 +383,11 @@ class FeathercoinWallet(CryptoWallet):
 
     @classmethod
     @bypassable_cache
-    def get_fiat_exchange(cls, currency='usd'):
-        url="http://api.feathercoin.com/?output=usd&amount=1&json=1"
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        fiat_symbol = fiat_symbol.lower()
+        url="http://api.feathercoin.com/?output=%s&amount=1&json=1" % fiat_symbol
         response = requests.get(url)
-        return float(response.json()[currency])
+        return float(response.json()[fiat_symbol])
 
     @classmethod
     def generate_new_keypair(cls):
@@ -373,17 +407,10 @@ class VertcoinWallet(CryptoWallet):
         return float(response.content)
 
     @classmethod
-    def get_historical_price(self, date, fiat_symbol='usd'):
-        url = "http://coinsentry.pw/price_for_date?fiat=%s&crypto=vtc&date=%s"
-        url = url % (fiat_symbol, date.isoformat())
-        response = requests.get(url)
-        return response.json()
-
-    @classmethod
     @bypassable_cache
-    def get_fiat_exchange(cls, currency='usd'):
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/vtc_%s"
-        response = requests.get(url % currency)
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        url="http://www.cryptocoincharts.info/v2/api/tradingPair/vtc_%s" % fiat_symbol
+        response = requests.get(url)
         return float(response.json()['price'])
 
 
@@ -400,9 +427,9 @@ class NextWallet(CryptoWallet):
 
     @classmethod
     @bypassable_cache
-    def get_fiat_exchange(cls, currency='usd'):
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/nxt_%s"
-        response = requests.get(url % currency)
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        url="http://www.cryptocoincharts.info/v2/api/tradingPair/nxt_%s" % fiat_symbol
+        response = requests.get(url)
         return float(response.json()['price'])
 
 

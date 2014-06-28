@@ -7,6 +7,10 @@ h1.overall_total {
 h1.logo {
     float: left
 }
+#fiat-currency {
+    font-size: xx-large;
+    height: 40px;
+}
 .modal {
     display: none;
     background: white;
@@ -104,7 +108,7 @@ a.reload:hover {
 .wallet-value {
     font-size: x-large;
 }
-.fiat-exchange {
+.address-fiat-exchange {
     font-size: x-large;
 }
 .fiat-value {

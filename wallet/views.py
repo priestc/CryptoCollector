@@ -50,21 +50,20 @@ def get_transactions(request):
         owner__id=request.user.id
     ).get()
     transactions = wallet.get_transactions()
-    j = json.dumps([
-        {
+    j = [{
             'txid': tx.txid,
             'historical_price': tx.historical_price(fiat_symbol),
             'amount': tx.amount,
             'date': tx.date.isoformat(),
         } for tx in transactions
-    ])
-    return HttpResponse(j, content_type="application/json")
+    ]
+    return HttpResponse(json.dumps(j), content_type="application/json")
 
 @login_required
 def get_value(request):
     """
     API call for getting the most recent price for a wallet.
-    All requests via this way bypass cache.
+    All requests via this way bypass cache. Data is always most fresh.
     """
     symbol, pk = request.GET['js_id'].split('-')
     fiat_symbol = request.GET.get('fiat', 'usd')
@@ -73,6 +72,19 @@ def get_value(request):
     ).get()
     j = wallet.price_json(hard_refresh=True, fiat_symbol=fiat_symbol)
     return HttpResponse(j, content_type="application/json")
+
+def get_exchange_rate(request):
+    crypto_symbol = request.GET.get('crypto', 'btc')
+    fiat_symbol = request.GET.get('fiat', 'usd')
+    Wallet = wallet_classes[crypto_symbol]
+    exchange = Wallet.get_fiat_exchange(fiat_symbol, hard_refresh=True)
+    j = {
+        'fiat_symbol': fiat_symbol,
+        'crypto_symbol': crypto_symbol,
+        'exchange_rate': exchange,
+        'price_source': Wallet.price_source
+    }
+    return HttpResponse(json.dumps(j), content_type="application/json")
 
 @login_required
 def get_private_key(request):

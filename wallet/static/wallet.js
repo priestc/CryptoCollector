@@ -56,8 +56,9 @@ function update_overall_fiat_total() {
         var number_with_commas = $(element).html();
         total += Number(number_with_commas.replace(",", ''));
     });
-
-    $("#total-fiat-amount").html(total.toLocaleString());
+    var with_commas = total.toLocaleString();
+    $("title").text(with_commas + " - CoinStove");
+    $("#total-fiat-amount").html(with_commas);
 }
 function update_DOM_with_price_for_wallet(wallet_id, data) {
     // from a dict of new prices for a wallet, update the DOM
@@ -85,7 +86,7 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
 
 }
 
-function make_tx_html(transaction, cardinal) {
+function make_tx_html(transaction, cardinal, crypto_symbol) {
     // Make the html for a single transaction.
     // Th caller of this function need to place it in the DOM.
     var time_utc = new Date(transaction['date']);
@@ -111,11 +112,12 @@ function make_tx_html(transaction, cardinal) {
                 "<span class='time-ago'> ({2} ago)</span>" +
             "</td>" +
             "<td class='verb {3}'>{3}</td>" +
-            "<td class='amount'>{4}</td>" +
+            "<td class='amount'>{4} {7}</td>" +
             "<td class='historical-price' title='{6}'>{5} USD</td>" +
         "</tr>",
         cardinal, time_utc.toDateString(), timeSince(time_utc), verb,
-        abs_amount.toFixed(4), numberWithCommas((h_price * abs_amount).toFixed(2)), source
+        abs_amount.toFixed(4), numberWithCommas((h_price * abs_amount).toFixed(2)),
+        source, crypto_symbol.toUpperCase()
     );
 }
 
@@ -151,11 +153,20 @@ $(function() {
         $("#new-wallet-modal").bPopup();
     });
 
+    $('.reload-currency-exchange').click(function(event) {
+        event.preventDefault();
+        var crypto_symbol = $(this).data('crypto-symbol');
+        console.log(crypto_symbol);
+    });
+
     $(".show-transactions").click(function(event) {
         // Get transactions from backend, then plug them into the DOM.
         event.preventDefault();
         var show_transaction = $(this);
         var wallet_id = show_transaction.data("wallet-id");
+        var crypto_symbol = show_transaction.data("crypto-symbol");
+        var fiat_symbol = $("#fiat-currency").val();
+        var js_id = crypto_symbol + "-" + wallet_id;
         var spinner = show_transaction.next();
         var container = spinner.next();
         spinner.show();
@@ -163,13 +174,13 @@ $(function() {
         $.ajax({
             url: "/wallets/transactions",
             data: {
-                js_id: wallet_id,
-                fiat: 'usd',
+                js_id: js_id,
+                fiat: fiat_symbol,
             },
         }).success(function(transactions) {
             container.find("tr").remove();
             $.each(transactions.reverse(), function(i, transaction) {
-                html = make_tx_html(transaction, i + 1);
+                html = make_tx_html(transaction, i + 1, crypto_symbol);
                 container.html(container.html() + html);
             })
         }).error(function(response) {

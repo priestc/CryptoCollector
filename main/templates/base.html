@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+        <script src="/static/jquery-1.11.1.js"></script>
         <style>
             #contrib-messages li {
                 margin: 1em 0;
@@ -22,7 +23,9 @@
                 border-color: red
             }
         </style>
-        {% block extra_head %}{% endblock %}
+        <title>CoinStove</title>
+        {% block extra_head %}
+        {% endblock %}
     </head>
     <body>
     {% if messages %}
