@@ -28,15 +28,17 @@ class CryptoWallet(models.Model):
     def has_private_key(self):
         return bool(self.private_key)
 
-    def price_json(self, currency='usd'):
+    def price_json(self, fiat_symbol='usd', hard_refresh=False):
         """
         Return a json encoded dict of price info. This data format is used for
         various things on the front end.
         """
         return json.dumps({
-            'wallet_value': self.get_value(),
-            'fiat_exchange': self.get_fiat_exchange(currency),
-            'fiat_value': self.get_fiat_value(currency),
+            'wallet_value': self.get_value(hard_refresh=hard_refresh),
+            'fiat_exchange': self.get_fiat_exchange(fiat_symbol, hard_refresh=hard_refresh),
+            'fiat_symbol': fiat_symbol.upper(),
+            'crypto_symbol': self.symbol.upper(),
+            'price_source': self.price_source,
         })
 
     def js_id(self):

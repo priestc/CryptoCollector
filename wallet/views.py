@@ -64,17 +64,15 @@ def get_transactions(request):
 def get_value(request):
     """
     API call for getting the most recent price for a wallet.
-    Al requests via this way bypass cache.
+    All requests via this way bypass cache.
     """
     symbol, pk = request.GET['js_id'].split('-')
+    fiat_symbol = request.GET.get('fiat', 'usd')
     wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
         owner__id=request.user.id
     ).get()
-    res = {
-        'fiat_exchange': wallet.get_fiat_exchange('usd', hard_refresh=True),
-        'wallet_value': wallet.get_value(hard_refresh=True),
-    }
-    return HttpResponse(json.dumps(res), content_type="application/json")
+    j = wallet.price_json(hard_refresh=True, fiat_symbol=fiat_symbol)
+    return HttpResponse(j, content_type="application/json")
 
 @login_required
 def get_private_key(request):

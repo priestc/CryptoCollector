@@ -87,10 +87,10 @@ table.wallet-address-details th {
 table.wallet-address-details td.balance {
     line-height: 35px;
 }
-.reload-wallet-price {
+.reload {
     text-decoration: none;
 }
-a.reload-wallet-price:hover {
+a.reload:hover {
     color: red;
 }
 .spinner {

@@ -70,12 +70,19 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
         var exchange = num_exchange.toFixed(4);
     }
 
+    var crypto = data['crypto_symbol'];
+    var fiat = data['fiat_symbol'];
     var fiat_value = numberWithCommas((num_exchange * data.wallet_value).toFixed(2));
     var wallet_value = numberWithCommas(data.wallet_value);
+    var exchange_units = crypto.toUpperCase() + "/" + fiat.toUpperCase();
 
     $("#" + wallet_id + " .wallet-value").html(wallet_value);
-    $("#" + wallet_id + " .fiat-exchange").html(exchange);
     $("#" + wallet_id + " .fiat-value").html(fiat_value);
+
+    $("." + crypto.toLowerCase() + "-fiat-exchange").html(exchange);
+    $("." + crypto.toLowerCase() + "-fiat-exchange-units").html(exchange_units);
+
+
 }
 
 function make_tx_html(transaction, cardinal) {
