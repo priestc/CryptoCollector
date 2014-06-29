@@ -1,4 +1,5 @@
 import json
+import datetime
 from collections import OrderedDict
 
 from django.template.response import TemplateResponse
@@ -7,6 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from models import wallet_classes
 from forms import WalletForm
+
+class DateTimeJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        else:
+            return super(DateTimeJSONEncoder, self).default(obj)
 
 @login_required
 def wallets(request):
@@ -53,11 +61,12 @@ def get_transactions(request):
     j = [{
             'txid': tx.txid,
             'historical_price': tx.historical_price(fiat_symbol),
+            'fiat_symbol': fiat_symbol,
             'amount': tx.amount,
             'date': tx.date.isoformat(),
         } for tx in transactions
     ]
-    return HttpResponse(json.dumps(j), content_type="application/json")
+    return HttpResponse(json.dumps(j, cls=DateTimeJSONEncoder), content_type="application/json")
 
 @login_required
 def get_value(request):

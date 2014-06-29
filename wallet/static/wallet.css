@@ -17,6 +17,10 @@ h1.logo {
     width: 400px;
     border: 1px solid black;
 }
+
+input[name=private_key] {
+    width: 20em;
+}
 .modal-title {
     width: 100%;
     background: gray;
@@ -60,8 +64,11 @@ h1.logo {
     border-radius: 10px;
     margin: 10px;
     padding: 5px;
+    background: lightgray;
 }
-
+.crypto-logo {
+    padding-right: 10px;
+}
 .wallet h2 {
     padding: 0px;
     margin: 10px 0 10px 0;
@@ -84,12 +91,15 @@ table.wallet-address-details th {
     text-align: right;
     width: 9em;
     padding: 6px;
-    vertical-align: top;
     border: 1px solid gray;
     border-radius: 10px;
 }
-table.wallet-address-details td.balance {
-    line-height: 35px;
+
+table th.transactions_header {
+    vertical-align: top;
+}
+.hide-transactions {
+    display: none;
 }
 .reload {
     text-decoration: none;
@@ -103,16 +113,6 @@ a.reload:hover {
 
 .no-private-key {
     color: red;
-}
-
-.wallet-value {
-    font-size: x-large;
-}
-.address-fiat-exchange {
-    font-size: x-large;
-}
-.fiat-value {
-    font-size: x-large;
 }
 .help {
     font-size: small;
@@ -151,7 +151,7 @@ a.reload:hover {
     background: lime;
 }
 .wallet-nxt {
-    background: violet;
+    background: orange;
 }
 
 .transaction .historical-price {

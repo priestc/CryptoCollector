@@ -75,9 +75,9 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
     var fiat = data['fiat_symbol'];
     var fiat_value = numberWithCommas((num_exchange * data.wallet_value).toFixed(2));
     var wallet_value = numberWithCommas(data.wallet_value);
-    var exchange_units = crypto.toUpperCase() + "/" + fiat.toUpperCase();
+    var exchange_units = fiat.toUpperCase() + "/" + crypto.toUpperCase();
 
-    $("#" + wallet_id + " .wallet-value").html(wallet_value);
+    $("#" + wallet_id + " .address-value").html(wallet_value);
     $("#" + wallet_id + " .fiat-value").html(fiat_value);
 
     $("." + crypto.toLowerCase() + "-fiat-exchange").html(exchange);
@@ -92,9 +92,11 @@ function make_tx_html(transaction, cardinal, crypto_symbol) {
     var time_utc = new Date(transaction['date']);
     var amount = Number(transaction['amount']);
     var txid = transaction['txid'];
+    var fiat_symbol = transaction['fiat_symbol'];
     var historical = transaction['historical_price'];
     var h_price = historical[0];
     var h_source = historical[1];
+    var h_date = new Date(historical[2]).toDateString();
     var abs_amount = Math.abs(amount);
     var source = h_source + ': ' + h_price;
 
@@ -113,11 +115,12 @@ function make_tx_html(transaction, cardinal, crypto_symbol) {
             "</td>" +
             "<td class='verb {3}'>{3}</td>" +
             "<td class='amount'>{4} {7}</td>" +
-            "<td class='historical-price' title='{6}'>{5} USD</td>" +
+            "<td class='historical-price' title='{6} {8}/{7} at {9}'>{5} {8}</td>" +
         "</tr>",
         cardinal, time_utc.toDateString(), timeSince(time_utc), verb,
         abs_amount.toFixed(4), numberWithCommas((h_price * abs_amount).toFixed(2)),
-        source, crypto_symbol.toUpperCase()
+        source, crypto_symbol.toUpperCase(), fiat_symbol.toUpperCase(),
+        h_date
     );
 }
 
@@ -189,6 +192,15 @@ $(function() {
         }).complete(function() {
             spinner.hide();
         });
+        $(this).hide();
+        $(this).prev().show(); // show the 'hide transactions' button.
+    });
+
+    $(".hide-transactions").click(function(event) {
+        event.preventDefault();
+        $(this).next().next().next().find('tr').remove(); // hide transactions section
+        $(this).next().show(); // show 'show transaction' button
+        $(this).hide();
     });
 
     $(".reload-wallet-price").click(function(event) {

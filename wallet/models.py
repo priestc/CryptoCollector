@@ -88,7 +88,8 @@ class CryptoWallet(models.Model):
         url = url % (fiat_symbol, self.symbol, date.isoformat())
         response = requests.get(url)
         print url, response.content
-        return response.json()
+        ret = response.json()
+        return [ret[0], ret[1], arrow.get(ret[2]).datetime]
 
     @classmethod
     def get_fiat_exchange(cls, currency='usd'):
@@ -157,15 +158,23 @@ class Transaction(object):
     confirmations = ''
     date = '' # date of transaction
 
+
     def historical_price(self, fiat_symbol):
         """
         Using the local cache, get the fiat price at the time of
         transaction.
         """
-        return HistoricalPrice.get_value(
-            self.date, self.crypto_symbol, fiat_symbol
-        )
+        @bypassable_cache
+        def _historical_price(crypto_symbol, fiat_symbol, date):
+            """
+            Written as a decorated inner function because the other function's
+            __repr__ messes up the automatic cache key generation. Here
+            the three arguments are straightforward and make a great cache key.
+            """
+            Wallet = wallet_classes[crypto_symbol]
+            return Wallet.get_historical_price(date, fiat_symbol=fiat_symbol)
 
+        return _historical_price(self.crypto_symbol, fiat_symbol, self.date)
 
 class BitcoinWallet(CryptoWallet):
     symbol = 'BTC'
@@ -421,9 +430,26 @@ class NextWallet(CryptoWallet):
 
     @bypassable_cache
     def get_value(self):
-        url='http://nxtportal.org/nxt?requestType=getAccount&account='
-        response = requests.get(url + self.public_key)
+        url='http://nxtportal.org/nxt?requestType=getAccount&account=' + self.public_key
+        response = requests.get(url)
         return float(response.json()['balanceNQT']) * 1e-8
+
+    def get_transactions(self):
+        url = 'http://nxtportal.org/transactions/account/%s?num=50' % self.public_key
+        response = requests.get(url)
+        import debug
+        txs = response.json()
+
+        transactions = []
+        for tx in txs:
+            t = Transaction()
+            t.date = arrow.get(tx['time_utc']).datetime
+            t.amount = tx['amount']
+            t.crypto_symbol = 'ppc'
+            t.txid = tx['tx']
+            t.confirmations = tx['confirmations']
+            transactions.append(t)
+        return transactions
 
     @classmethod
     @bypassable_cache
@@ -442,51 +468,3 @@ wallet_classes = OrderedDict((
     ('nxt', NextWallet),
     ('ftc', FeathercoinWallet),
 ))
-
-class HistoricalPrice(models.Model):
-    crypto_symbol = models.CharField(max_length=8)
-    fiat_symbol = models.CharField(max_length=8)
-    when = models.DateTimeField()
-    price = models.FloatField()
-    source = models.CharField(max_length=64)
-
-    def __unicode__(self):
-        return "{}:{:%d, %b %Y}:{}".format(self.source, self.when, self.price)
-
-    @classmethod
-    def fetch(cls, when, crypto_symbol='btc', fiat_symbol='usd'):
-        """
-        Get the appropriate Wallet model and call it's get_historical
-        method. That method will then call an external data source.
-        The results are then returned and stored for later use.
-        """
-        Wallet = wallet_classes[crypto_symbol]
-        price, source = Wallet.get_historical_price(when, fiat_symbol=fiat_symbol)
-        obj = cls.objects.create(
-            fiat_symbol=fiat_symbol,
-            crypto_symbol=crypto_symbol,
-            when=when,
-            source=source,
-            price=price
-        )
-        return obj
-
-    @classmethod
-    def get_value(cls, when, crypto_symbol='btc', fiat_symbol='usd'):
-        """
-        This function is the primary interface to the historical price
-        system. It first tries the database, if no match, it calls the
-        correct external source (such as bitcoincharts.com).
-        """
-        d = datetime.timedelta(hours=1)
-        historical_price = cls.objects.filter(
-            crypto_symbol=crypto_symbol,
-            fiat_symbol=fiat_symbol,
-            when__range=[when-d, when+d]
-        )
-        try:
-            obj = historical_price[0]
-        except IndexError:
-            obj = cls.fetch(when, crypto_symbol=crypto_symbol, fiat_symbol=fiat_symbol)
-
-        return obj.price, obj.source
