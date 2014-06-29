@@ -83,12 +83,11 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
     $("." + crypto.toLowerCase() + "-fiat-exchange").html(exchange);
     $("." + crypto.toLowerCase() + "-fiat-exchange-units").html(exchange_units);
 
-
 }
 
 function make_tx_html(transaction, cardinal, crypto_symbol) {
     // Make the html for a single transaction.
-    // Th caller of this function need to place it in the DOM.
+    // The caller of this function needs to place it in the DOM.
     var time_utc = new Date(transaction['date']);
     var amount = Number(transaction['amount']);
     var txid = transaction['txid'];
@@ -99,6 +98,7 @@ function make_tx_html(transaction, cardinal, crypto_symbol) {
     var h_date = new Date(historical[2]).toDateString();
     var abs_amount = Math.abs(amount);
     var source = h_source + ': ' + h_price;
+    var external_link = "<a target='_blank' href='" + get_tx_external_link(crypto_symbol, txid) + "'>BE</a>";
 
     if(amount < 0) {
         var verb = 'Sent';
@@ -116,11 +116,12 @@ function make_tx_html(transaction, cardinal, crypto_symbol) {
             "<td class='verb {3}'>{3}</td>" +
             "<td class='amount'>{4} {7}</td>" +
             "<td class='historical-price' title='{6} {8}/{7} at {9}'>{5} {8}</td>" +
+            "<td class='external-link'>{10}</td>" +
         "</tr>",
         cardinal, time_utc.toDateString(), timeSince(time_utc), verb,
         abs_amount.toFixed(4), numberWithCommas((h_price * abs_amount).toFixed(2)),
         source, crypto_symbol.toUpperCase(), fiat_symbol.toUpperCase(),
-        h_date
+        h_date, external_link
     );
 }
 
@@ -159,7 +160,11 @@ $(function() {
     $('.reload-currency-exchange').click(function(event) {
         event.preventDefault();
         var crypto_symbol = $(this).data('crypto-symbol');
-        console.log(crypto_symbol);
+        $.ajax({
+            url: '/wallets/get_exchange_rate/' + crypto_symbol
+        }).success(function() {
+
+        });
     });
 
     $(".show-transactions").click(function(event) {
@@ -188,7 +193,7 @@ $(function() {
             })
         }).error(function(response) {
             // dump error message to the screen, figure it out later.
-            container.html("oh snap!! error!! " + response.responseText);
+            container.html("<tr><td><pre>" + response.responseText + "</pre></td><tr>");
         }).complete(function() {
             spinner.hide();
         });

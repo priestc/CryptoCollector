@@ -216,10 +216,15 @@
 <script src="/static/jquery.bpopup.min.js"></script>
 <script src="/static/wallet.js"></script>
 <script>
+    tx_external_link_remplates = {};
     $(function() {
+
         // Done this way so that all number formatting goes through one place.
-        {% for wallets in wallets_for_all_currencies.values %}
+        {% for crypto_symbol, wallets in wallets_for_all_currencies.items %}
         {% for wallet in wallets %}
+            {% if forloop.counter == 1 %}
+            tx_external_link_remplates["{{crypto_symbol}}"] = "{{ wallet.tx_external_link_template }}";
+            {% endif %}
         update_DOM_with_price_for_wallet('{{ wallet.js_id }}', {{ wallet.price_json|safe }});
         {% endfor %}
         {% endfor %}
@@ -233,5 +238,9 @@
 
         });
     });
+
+    function get_tx_external_link(crypto_symbol, txid) {
+        return String.format(tx_external_link_remplates[crypto_symbol], txid);
+    }
 </script>
 {% endblock %}

@@ -147,17 +147,16 @@ def bypassable_cache(func):
 class Transaction(object):
     """
     Like a model class, but not a django model because transactions are
-    always sourced from external data sources. All cryptocurrencies will use this
-    class for handling transactions.
+    always sourced from external data sources (never in local db). All
+    cryptocurrencies will use this class for displaying/dealing wth transactions.
     """
-    crypto_symbol = 'btc'
-    cardinal = '1' # first, second, third transaction for an address... expressed as int
+    crypto_symbol = '' #  btc, ltc, doge, etc.
+    cardinal = 0 # first, second, third transaction for an address... expressed as int
     txid = '' # long hash that this tx is indexed by in the blockchain
     amount = 0.0 # positive float for recieved transaction, negative for send
     other_address = '' # either the sender or the recipient's public key/address
     confirmations = ''
-    date = '' # date of transaction
-
+    date = '' # date of transaction (a datetime instance)
 
     def historical_price(self, fiat_symbol):
         """
@@ -180,11 +179,12 @@ class BitcoinWallet(CryptoWallet):
     symbol = 'BTC'
     full_name = 'Bitcoin'
     price_source = 'coinbase.com'
+    tx_external_link_template = "http://blockchain.info/tx/{0}"
 
     @bypassable_cache
     def get_value(self):
         url = "http://blockchain.info/address/%s?format=json"
-        response = requests.get(url  % self.public_key)
+        response = requests.get(url % self.public_key)
         return float(response.json()['final_balance']) * 1e-8
 
     @classmethod
@@ -227,6 +227,7 @@ class LitecoinWallet(CryptoWallet):
     symbol = "LTC"
     full_name = 'Litecoin'
     price_source = "btc-e"
+    tx_external_link_template = "http://explorer.litecoin.net/tx/{0}"
 
     @bypassable_cache
     def get_value(self):
@@ -269,6 +270,7 @@ class DogecoinWallet(CryptoWallet):
     symbol = "DOGE"
     full_name = 'Dogecoin'
     price_source = 'dogeapi.com'
+    tx_external_link_template = 'http://dogechain.info/tx/{0}'
 
     @bypassable_cache
     def get_value(self):
@@ -326,6 +328,7 @@ class PeercoinWallet(CryptoWallet):
     symbol = "PPC"
     full_name = 'Peercoin'
     price_source = 'btc-e'
+    tx_external_link_template = "http://bkchain.org/ppc/tx/{0}"
 
     @bypassable_cache
     def get_value(self):
@@ -380,6 +383,7 @@ class FeathercoinWallet(CryptoWallet):
     symbol = 'FTC'
     full_name = 'Feathercoin'
     price_source = 'api.feathercoin.com'
+    tx_external_link_template = ""
 
     @bypassable_cache
     def get_value(self):
@@ -408,6 +412,7 @@ class VertcoinWallet(CryptoWallet):
     symbol = 'VTC'
     full_name = 'Vertcoin'
     price_source = 'cryptocoincharts.info'
+    tx_external_link_template = ""
 
     @bypassable_cache
     def get_value(self):
@@ -427,6 +432,7 @@ class NextWallet(CryptoWallet):
     symbol = 'NXT'
     full_name = 'Next'
     price_source = 'cryptocoincharts.info'
+    tx_external_link_template = "http://nxtexplorer.com/nxt/nxt.cgi?action=2000&tra={0}"
 
     @bypassable_cache
     def get_value(self):
@@ -463,8 +469,8 @@ wallet_classes = OrderedDict((
     ('btc', BitcoinWallet),
     ('ltc', LitecoinWallet),
     ('doge', DogecoinWallet),
-    ('vtc', VertcoinWallet),
     ('ppc', PeercoinWallet),
-    ('nxt', NextWallet),
+    ('vtc', VertcoinWallet),
     ('ftc', FeathercoinWallet),
+    ('nxt', NextWallet),
 ))
