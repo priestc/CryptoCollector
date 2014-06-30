@@ -48,6 +48,10 @@ function numberWithCommas(x) {
     return parts.join(".");
 }
 
+function format_fiat(num) {
+    return numberWithCommas(num.toFixed(2));
+}
+
 function update_overall_fiat_total() {
     // Get the totals from each wallet and add them up.
     // Stick that number into the DOM.
@@ -60,8 +64,8 @@ function update_overall_fiat_total() {
     $("title").text(with_commas + " - CoinStove");
     $("#total-fiat-amount").html(with_commas);
 }
-function update_DOM_with_price_for_wallet(wallet_id, data) {
-    // from a dict of new prices for a wallet, update the DOM
+function update_DOM_with_price_for_address(js_id, data) {
+    // from a dict of new prices for an address, update the DOM
     // gets called after ajax call to get updated price.
     // Updates the wallet, exchange, and fiat value.
     var num_exchange = Number(data.fiat_exchange);
@@ -71,18 +75,17 @@ function update_DOM_with_price_for_wallet(wallet_id, data) {
         var exchange = num_exchange.toFixed(4);
     }
 
-    var crypto = data['crypto_symbol'];
-    var fiat = data['fiat_symbol'];
-    var fiat_value = numberWithCommas((num_exchange * data.wallet_value).toFixed(2));
+    var crypto_symbol = data['crypto_symbol'];
+    var fiat_symbol = data['fiat_symbol'];
+    var fiat_value = format_fiat(num_exchange * data.wallet_value);
     var wallet_value = numberWithCommas(data.wallet_value);
-    var exchange_units = fiat.toUpperCase() + "/" + crypto.toUpperCase();
+    var exchange_units = fiat_symbol.toUpperCase() + "/" + crypto_symbol.toUpperCase();
 
-    $("#" + wallet_id + " .address-value").html(wallet_value);
-    $("#" + wallet_id + " .fiat-value").html(fiat_value);
+    $("#" + js_id + " .address-value").html(wallet_value);
+    $("#" + js_id + " .address-fiat-value").html(fiat_value);
 
-    $("." + crypto.toLowerCase() + "-fiat-exchange").html(exchange);
-    $("." + crypto.toLowerCase() + "-fiat-exchange-units").html(exchange_units);
-
+    $("." + crypto_symbol.toLowerCase() + "-fiat-exchange").html(exchange);
+    $("." + crypto_symbol.toLowerCase() + "-fiat-exchange-units").html(exchange_units);
 }
 
 function make_tx_html(transaction, cardinal, crypto_symbol) {
@@ -152,6 +155,25 @@ function initialize_webcam(video) {
     );
 }
 
+function update_wallet_total(crypto_symbol) {
+    // for a passed in crypto-symbol ('btc', 'ltc', etc) add up
+    // all addresses, and then put that into the header.
+    var wallet = $('.wallet-' + crypto_symbol.toLowerCase());
+    var addresses = wallet.find('.address-value');
+    var wallet_total = 0;
+
+    $.each(addresses, function(i, address) {
+        wallet_total += Number($(address).text());
+    });
+
+    wallet.find('.wallet-total-crypto').text(wallet_total);
+
+    var exchange_rate = $('.' + crypto_symbol + '-fiat-exchange').first().text();
+    var fiat_total = exchange_rate * wallet_total;
+    console.log(exchange_rate);
+    wallet.find('.wallet-total-fiat').text(format_fiat(fiat_total));
+}
+
 $(function() {
     $("#new-wallet").click(function() {
         $("#new-wallet-modal").bPopup();
@@ -160,10 +182,14 @@ $(function() {
     $('.reload-currency-exchange').click(function(event) {
         event.preventDefault();
         var crypto_symbol = $(this).data('crypto-symbol');
-        $.ajax({
-            url: '/wallets/get_exchange_rate/' + crypto_symbol
-        }).success(function() {
+        var url = '/wallets/get_exchange_rate?crypto={0}&fiat={1}';
+        var fiat_symbol = $("#fiat-currency").val();
 
+        $.ajax({
+            url: String.format(url, crypto_symbol, fiat_symbol)
+        }).success(function(response) {
+            var new_ex_rate = response['exchange_rate'];
+            var new_source = response['price_source'];
         });
     });
 
@@ -208,11 +234,12 @@ $(function() {
         $(this).hide();
     });
 
-    $(".reload-wallet-price").click(function(event) {
+    $(".reload-address-price").click(function(event) {
         // Get the current price from the backend, and then update the
         // front end with new wallet totals.
         event.preventDefault();
         var wallet_id = $(this).data('wallet-id');
+        var crypto_symbol = $(this).data('crypto-symbol');
         var wallet = $("#" + wallet_id);
         var spinner = wallet.find(".price-spinner");
         spinner.show();
@@ -224,7 +251,8 @@ $(function() {
         }).success(function(data) {
             // returned will be new totals for this wallet
             // plug into front end.
-            update_DOM_with_price_for_wallet(wallet_id, data);
+            update_DOM_with_price_for_address(wallet_id, data);
+            update_wallet_total(crypto_symbol);
             update_overall_fiat_total();
         }).error(function(response) {
             wallet.find('.error').html("<pre>" + response.responseText + "</pre>");

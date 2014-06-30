@@ -7,6 +7,13 @@ WALLET_CHOICES = [
     (symbol, "%s - %s" % (symbol.upper(), kls.full_name)) for (symbol, kls) in wallet_classes.items()
 ]
 
+FEE_CHOICES = [
+    (0, 'nothing'),
+    (1, 'penny'),
+    (2, 'nickel'),
+    (3, 'dollar')
+]
+
 class WalletForm(forms.Form):
     private_key = forms.CharField(max_length=64, help_text="optional", required=False)
     public_key = forms.CharField(max_length=64, help_text="optional", required=False)
@@ -28,3 +35,10 @@ class WalletForm(forms.Form):
             private_key=private_key,
             name=self.cleaned_data['nickname'] or "My %s" % t.upper()
         )
+
+class TransactionForm(forms.Form):
+    source_wallet = forms.CharField()
+    amount = forms.CharField()
+    target_address = forms.CharField()
+    target_address_label = forms.CharField()
+    miner_fee = forms.ChoiceField(choices=FEE_CHOICES)

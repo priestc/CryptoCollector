@@ -63,7 +63,7 @@ def get_transactions(request):
             'historical_price': tx.historical_price(fiat_symbol),
             'fiat_symbol': fiat_symbol,
             'amount': tx.amount,
-            'date': tx.date.isoformat(),
+            'date': tx.date,
         } for tx in transactions
     ]
     return HttpResponse(json.dumps(j, cls=DateTimeJSONEncoder), content_type="application/json")

@@ -8,6 +8,7 @@ import requests
 import arrow
 from django.db import models
 from django.core.cache import cache
+from django.conf import settings
 
 from coinkit import (BitcoinKeypair, PeercoinKeypair, LitecoinKeypair,
     DogecoinKeypair,FeathercoinKeypair)
@@ -84,9 +85,9 @@ class CryptoWallet(models.Model):
 
     @classmethod
     def get_historical_price(self, date, fiat_symbol='usd'):
-        url = "http://coinsentry.pw/price_for_date?fiat=%s&crypto=%s&date=%s"
-        url = url % (fiat_symbol, self.symbol, date.isoformat())
-        response = requests.get(url)
+        url = "http://%s/price_for_date?fiat=%s&crypto=%s&date=%s"
+        url = url % (settings.HISTORICAL_DOMAIN, fiat_symbol, self.symbol, date.isoformat())
+        response = requests.get(url, headers={'User-Agent': "CoinStove 0.8"})
         print url, response.content
         ret = response.json()
         return [ret[0], ret[1], arrow.get(ret[2]).datetime]
@@ -383,7 +384,7 @@ class FeathercoinWallet(CryptoWallet):
     symbol = 'FTC'
     full_name = 'Feathercoin'
     price_source = 'api.feathercoin.com'
-    tx_external_link_template = ""
+    tx_external_link_template = "http://explorer.feathercoin.com/tx/{0}"
 
     @bypassable_cache
     def get_value(self):
@@ -412,7 +413,7 @@ class VertcoinWallet(CryptoWallet):
     symbol = 'VTC'
     full_name = 'Vertcoin'
     price_source = 'cryptocoincharts.info'
-    tx_external_link_template = ""
+    tx_external_link_template = "http://explorer.obi.vg/tx/{0}"
 
     @bypassable_cache
     def get_value(self):
@@ -441,6 +442,7 @@ class NextWallet(CryptoWallet):
         return float(response.json()['balanceNQT']) * 1e-8
 
     def get_transactions(self):
+        raise NotImplementedError()
         url = 'http://nxtportal.org/transactions/account/%s?num=50' % self.public_key
         response = requests.get(url)
         import debug

@@ -92,3 +92,5 @@ CACHES = {
         'TIMEOUT': 600000,
     }
 }
+
+HISTORICAL_DOMAIN = 'localhost:9000'

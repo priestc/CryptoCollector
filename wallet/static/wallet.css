@@ -58,6 +58,19 @@ input[name=private_key] {
     margin: 0 auto 0 auto;
     padding: 10px;
 }
+.wallet-top-section {
+    width: 100%;
+}
+.wallet-top-section td.logo {
+    width: 128px;
+}
+
+td.wallet-totals {
+    padding-right: 10px;
+    font-size: large;
+    text-align: right;
+}
+
 .wallet {
     width: 95%;
     border: 1px solid black;
