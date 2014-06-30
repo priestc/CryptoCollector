@@ -184,8 +184,7 @@ function initialize_webcam(video) {
     );
 }
 function reload_currency_exchange(crypto_symbol) {
-    //
-    var spinner = $(this).next();
+    var spinner = $(".wallet-" + crypto_symbol + " .exchange-rate-spinner");
     var fiat_symbol = $('.fiat-symbol').first().text();
     spinner.show();
 

@@ -82,7 +82,7 @@ class CryptoWallet(models.Model):
     def has_private_key(self):
         return bool(self.private_key)
 
-    def price_json(self, fiat_symbol='usd', hard_refresh=False):
+    def price_json(self, hard_refresh=False):
         """
         Return a json encoded dict of price info. This data format is used for
         various things on the front end.
@@ -392,7 +392,6 @@ class PeercoinWallet(CryptoWallet):
         url = 'http://ppc.blockr.io/api/v1/address/txs/' + self.public_key
         response = fetch_url(url)
         txs = response.json()['data']['txs']
-        import debug
         transactions = []
         for tx in txs:
             t = Transaction()

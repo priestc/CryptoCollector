@@ -59,7 +59,7 @@
                         <span class="{{ crypto_symbol }}-fiat-exchange"></span>
                         <span class="{{ crypto_symbol }}-fiat-exchange-units"></span>
                         <a href="#" class="reload reload-currency-exchange" data-crypto-symbol="{{ crypto_symbol }}">&#x21bb;</a>
-                        <img class="spinner price-spinner" src="/static/spinner16.gif" height="16" width="16">
+                        <img class="spinner exchange-rate-spinner" src="/static/spinner16.gif" height="16" width="16">
                     </td>
                     <td class="wallet-totals">
                         <span class="wallet-total-crypto"></span> {{ crypto_symbol|upper }}<br>
@@ -229,11 +229,14 @@
         $("#fiat-currency-selector").change(function(event){
             var fiat = $(this).val();
             localStorage['fiat-currency-selector'] = fiat;
-            $('.fiat-symbol').text(fiat.toUpperCase());
+            console.log("change fiat selector", $(this).val());
+            window.location.reload();
         });
 
         if(localStorage['fiat-currency-selector']) {
-            $("#fiat-currency-selector").val(localStorage['fiat-currency-selector']).trigger('change');
+            var fiat = localStorage['fiat-currency-selector'];
+            $("#fiat-currency-selector").val(fiat);
+            $('.fiat-symbol').text(fiat.toUpperCase());
         }
 
         // Done this way so that all number formatting goes through one place.

@@ -75,18 +75,17 @@ def get_value(request):
     All requests via this way bypass cache. Data is always most fresh.
     """
     symbol, pk = request.GET['js_id'].split('-')
-    fiat_symbol = request.GET.get('fiat', 'usd')
     wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
         owner__id=request.user.id
     ).get()
-    j = wallet.price_json(hard_refresh=False, fiat_symbol=fiat_symbol)
+    j = wallet.price_json(hard_refresh=False)
     return HttpResponse(j, content_type="application/json")
 
 def get_exchange_rate(request):
-    crypto_symbol = request.GET.get('crypto', 'btc')
-    fiat_symbol = request.GET.get('fiat', 'usd')
+    crypto_symbol = request.GET['crypto']
+    fiat_symbol = request.GET['fiat']
     Wallet = wallet_classes[crypto_symbol.lower()]
-    j = Wallet.exchange_rate_json(hard_refresh=False, fiat_symbol=fiat_symbol)
+    j = Wallet.exchange_rate_json(hard_refresh=True, fiat_symbol=fiat_symbol)
     return HttpResponse(j, content_type="application/json")
 
 @login_required
