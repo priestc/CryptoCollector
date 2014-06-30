@@ -30,103 +30,6 @@ def fetch_url(*args, **kwargs):
     print "...done"
     return ret
 
-
-class CryptoWallet(models.Model):
-    """
-    Base methods for all types of cryptocurrency wallets
-    """
-    owner = models.ForeignKey('auth.User')
-    date_created = models.DateTimeField(default=datetime.datetime.now)
-    name = models.TextField(max_length=64, blank=True)
-    public_key = models.TextField()
-    private_key = models.TextField(null=True, blank=True)
-
-    def __unicode__(self):
-        return "%s - %s" % (self.owner.username, self.public_key)
-
-    def has_private_key(self):
-        return bool(self.private_key)
-
-    def price_json(self, fiat_symbol='usd', hard_refresh=False):
-        """
-        Return a json encoded dict of price info. This data format is used for
-        various things on the front end.
-        """
-        return json.dumps({
-            'wallet_value': self.get_value(hard_refresh=hard_refresh),
-            'fiat_exchange': self.get_fiat_exchange(fiat_symbol, hard_refresh=hard_refresh),
-            'fiat_symbol': fiat_symbol.upper(),
-            'crypto_symbol': self.symbol.upper(),
-            'price_source': self.price_source,
-        })
-
-    def js_id(self):
-        """
-        This is how the front end (javascript) identifies wallets.
-        """
-        return "%s-%s" % (self.symbol.lower(), self.pk)
-
-    def get_fiat_value(self, fiat='usd'):
-        """
-        Multiply a crypto amunt by the returned number to get the value of that
-        crypto amount in local currency. For instance a bitcoin wallet with
-        2.3 bitcoins can be converted to USD by:
-        >>> btc = BitcoinWallet()
-        >>> fiat_conversion = btc.get_fiat_value('usd')
-        >>> 2.3 * fiat_conversion
-        1894.4 # 2.3 bitcoins == 1894.4 USD
-        """
-        return self.get_value() * self.get_fiat_exchange(fiat)
-
-    def get_value(self):
-        """
-        Get the total amount of currency units that this wallet holds.
-        Get from the blockchain. Either through an external service or
-        through a locally running *coind
-        """
-        raise NotImplementedError()
-
-    def send_to_address(self, address, amount):
-        """
-        Create a transaction of passed in amount to passed in address and send
-        off to the coin network. Done either through an external service
-        or through locally ran *coind.
-        """
-        raise NotImplementedError()
-
-    def get_transactions(self):
-        """
-        Make a call to an external service and get all transactions for this
-        address.
-        """
-        raise NotImplementedError()
-
-    @classmethod
-    def get_historical_price(self, date, fiat_symbol='usd'):
-        url = "http://%s/price_for_date?fiat=%s&crypto=%s&date=%s"
-        url = url % (settings.HISTORICAL_DOMAIN, fiat_symbol, self.symbol, date.isoformat())
-        response = fetch_url(url)
-        print url, response.content
-        ret = response.json()
-        return [ret[0], ret[1], arrow.get(ret[2]).datetime]
-
-    @classmethod
-    def get_fiat_exchange(cls, currency='usd'):
-        """
-        Return the amount of units of currency per USD.
-        Returned as a float. Not all subclasses may implement
-        every curency.
-        """
-        raise NotImplementedError()
-
-    @classmethod
-    def generate_new_keypair(cls):
-        raise NotImplementedError()
-
-    class Meta:
-        abstract = True
-
-
 def bypassable_cache(func):
     """
     Cache decorator that caches the output of the function, but allows for the
@@ -163,6 +66,137 @@ def bypassable_cache(func):
         return ret
     return lil_wayne
 
+class CryptoWallet(models.Model):
+    """
+    Base methods for all types of cryptocurrency wallets
+    """
+    owner = models.ForeignKey('auth.User')
+    date_created = models.DateTimeField(default=datetime.datetime.now)
+    name = models.TextField(max_length=64, blank=True)
+    public_key = models.TextField()
+    private_key = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return "%s - %s" % (self.owner.username, self.public_key)
+
+    def has_private_key(self):
+        return bool(self.private_key)
+
+    def price_json(self, fiat_symbol='usd', hard_refresh=False):
+        """
+        Return a json encoded dict of price info. This data format is used for
+        various things on the front end.
+        """
+        try:
+            value = self.get_value(hard_refresh=hard_refresh)
+        except:
+            raise Exception("Can't get address value: %s" % self.symbol)
+
+        return json.dumps({
+            'wallet_value': value,
+            'crypto_symbol': self.symbol.upper(),
+            'price_source': self.price_source,
+        })
+
+    @classmethod
+    def exchange_rate_json(cls, fiat_symbol='usd', hard_refresh=False):
+        """
+        Returns a json encoded string that describes the currency's exchange rate.
+        A class method because it doesn't need any private keys.
+        """
+        if cls.symbol.lower() == fiat_symbol.lower():
+            exchange = 1.0
+        else:
+            exchange = cls.get_fiat_exchange(fiat_symbol, hard_refresh=hard_refresh)
+
+        return json.dumps({
+            'fiat_symbol': fiat_symbol.upper(),
+            'crypto_symbol': cls.symbol.upper(),
+            'exchange_rate': exchange,
+            'price_source': cls.price_source
+        })
+
+    def js_id(self):
+        """
+        This is how the front end (javascript) identifies wallets.
+        """
+        return "%s-%s" % (self.symbol.lower(), self.pk)
+
+    def get_fiat_value(self, fiat='usd'):
+        """
+        Multiply a crypto amunt by the returned number to get the value of that
+        crypto amount in local currency. For instance a bitcoin wallet with
+        2.3 bitcoins can be converted to USD by:
+        >>> btc = BitcoinWallet()
+        >>> fiat_conversion = btc.get_fiat_value('usd')
+        >>> 2.3 * fiat_conversion
+        1894.4 # 2.3 bitcoins == 1894.4 USD
+        """
+        try:
+            val = self.get_value()
+        except Exception as exc:
+            raise Exception("ACK")
+            exc.message = "Failed to get address value rate for %s" % self.private_key
+            raise exc
+
+        try:
+            exchange = self.get_fiat_exchange(fiat)
+        except Exception as exc:
+            raise Exception("ACK")
+            exc.message = "Failed to get exchange rate for %s/%s" % (fiat, self.symbol)
+            raise exc
+
+        return val * exchange
+
+    def get_value(self):
+        """
+        Get the total amount of currency units that this wallet holds.
+        Get from the blockchain. Either through an external service or
+        through a locally running *coind
+        """
+        raise NotImplementedError()
+
+    def send_to_address(self, address, amount):
+        """
+        Create a transaction of passed in amount to passed in address and send
+        off to the coin network. Done either through an external service
+        or through locally ran *coind.
+        """
+        raise NotImplementedError()
+
+    def get_transactions(self):
+        """
+        Make a call to an external service and get all transactions for this
+        address.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def get_historical_price(self, date, fiat_symbol='usd'):
+        url = "http://%s/price_for_date?fiat=%s&crypto=%s&date=%s"
+        url = url % (settings.HISTORICAL_DOMAIN, fiat_symbol, self.symbol, date.isoformat())
+        response = fetch_url(url)
+        print url, response.content
+        ret = response.json()
+        return [ret[0], ret[1], arrow.get(ret[2]).datetime]
+
+    @classmethod
+    @bypassable_cache
+    def get_fiat_exchange(cls, fiat_symbol='usd'):
+        url="http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
+            cls.symbol, fiat_symbol
+        )
+        response = fetch_url(url).json()
+        return float(response['price'])
+
+    @classmethod
+    def generate_new_keypair(cls):
+        raise NotImplementedError()
+
+    class Meta:
+        abstract = True
+
+
 class Transaction(object):
     """
     Like a model class, but not a django model because transactions are
@@ -186,7 +220,7 @@ class Transaction(object):
         def _historical_price(crypto_symbol, fiat_symbol, date):
             """
             Written as a decorated inner function because the other function's
-            __repr__ messes up the automatic cache key generation. Here
+            __repr__ messes up the decorator's automatic cache key generation. Here
             the three arguments are straightforward and make a great cache key.
             """
             Wallet = wallet_classes[crypto_symbol]
@@ -206,13 +240,6 @@ class BitcoinWallet(CryptoWallet):
         url = "http://blockchain.info/address/%s?format=json"
         response = fetch_url(url % self.public_key)
         return float(response.json()['final_balance']) * 1e-8
-
-    @classmethod
-    @bypassable_cache
-    def get_fiat_exchange(cls, fiat_symbol='usd'):
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/btc_%s" % fiat_symbol
-        response = fetch_url(url)
-        return float(response.json()['price'])
 
     @classmethod
     def generate_new_keypair(cls):
@@ -258,13 +285,6 @@ class LitecoinWallet(CryptoWallet):
         raise NotImplementedError()
 
     @classmethod
-    @bypassable_cache
-    def get_fiat_exchange(cls, fiat_symbol='usd'):
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/ltc_%s" % fiat_symbol
-        response = fetch_url(url)
-        return float(response.json()['price'])
-
-    @classmethod
     def generate_new_keypair(cls):
         keypair = LitecoinKeypair()
         return keypair.address(), keypair.private_key()
@@ -296,13 +316,6 @@ class DogecoinWallet(CryptoWallet):
         url = "https://dogechain.info/chain/Dogecoin/q/addressbalance/"
         response = fetch_url(url + self.public_key)
         return float(response.content)
-
-    @classmethod
-    @bypassable_cache
-    def get_fiat_exchange(cls, fiat_symbol='usd'):
-        url = "https://www.dogeapi.com/wow/v2/?a=get_current_price&convert_to=%s&amount_doge=1"
-        response = fetch_url(url % fiat_symbol.upper())
-        return float(response.json()['data']['amount'])
 
     def send_to_address(self, address, amount):
         raise NotImplementedError()
@@ -359,13 +372,6 @@ class PeercoinWallet(CryptoWallet):
         raise NotImplementedError()
 
     @classmethod
-    @bypassable_cache
-    def get_fiat_exchange(cls, fiat_symbol='usd'):
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/ppc_%s" % fiat_symbol
-        response = fetch_url(url)
-        return float(response.json()['price'])
-
-    @classmethod
     def generate_new_keypair(cls):
         keypair = PeercoinKeypair()
         return keypair.address(), keypair.private_key()
@@ -414,14 +420,6 @@ class FeathercoinWallet(CryptoWallet):
             return 0
 
     @classmethod
-    @bypassable_cache
-    def get_fiat_exchange(cls, fiat_symbol='usd'):
-        fiat_symbol = fiat_symbol.lower()
-        url="http://api.feathercoin.com/?output=%s&amount=1&json=1" % fiat_symbol
-        response = fetch_url(url)
-        return float(response.json()[fiat_symbol])
-
-    @classmethod
     def generate_new_keypair(cls):
         keypair = FeathercoinKeypair()
         return keypair.address(), keypair.private_key()
@@ -438,13 +436,6 @@ class VertcoinWallet(CryptoWallet):
         url = "https://explorer.vertcoin.org/chain/Vertcoin/q/addressbalance/"
         response = fetch_url(url + self.public_key)
         return float(response.content)
-
-    @classmethod
-    @bypassable_cache
-    def get_fiat_exchange(cls, fiat_symbol='usd'):
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/vtc_%s" % fiat_symbol
-        response = fetch_url(url)
-        return float(response.json()['price'])
 
 
 class NextWallet(CryptoWallet):
@@ -476,13 +467,6 @@ class NextWallet(CryptoWallet):
             t.confirmations = tx['confirmations']
             transactions.append(t)
         return transactions
-
-    @classmethod
-    @bypassable_cache
-    def get_fiat_exchange(cls, fiat_symbol='usd'):
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/nxt_%s" % fiat_symbol
-        response = fetch_url(url)
-        return float(response.json()['price'])
 
 
 wallet_classes = OrderedDict((

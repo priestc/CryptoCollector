@@ -53,7 +53,7 @@ function format_fiat(num) {
 }
 
 function format_crypto(num) {
-    return numberWithCommas(num.toPrecision(5));
+    return numberWithCommas(num.toPrecision(6));
 }
 
 function clean_number(num) {
@@ -75,26 +75,46 @@ function update_overall_fiat_total() {
 function update_address_balance(js_id, data) {
     // from a dict of new prices for an address, update the DOM
     // gets called after ajax call to get updated price.
-    // Updates the wallet, exchange, and fiat value.
-    var num_exchange = Number(data.fiat_exchange);
-    if(num_exchange > 1) {
-        var exchange = numberWithCommas(num_exchange.toPrecision(5));
-    } else {
-        var exchange = num_exchange.toFixed(4);
-    }
+    // Updates the wallet crypto value, and fiat value.
+    var crypto_symbol = data['crypto_symbol'].toLowerCase();
+    var num_exchange = Number($("." + crypto_symbol + "-fiat-exchange").first().text());
 
-    var crypto_symbol = data['crypto_symbol'];
-    var fiat_symbol = data['fiat_symbol'];
     var fiat_value = format_fiat(num_exchange * data.wallet_value);
     var wallet_value = numberWithCommas(data.wallet_value);
-    var exchange_units = fiat_symbol.toUpperCase() + "/" + crypto_symbol.toUpperCase();
 
     $("#" + js_id + " .address-value").html(wallet_value);
     $("#" + js_id + " .address-fiat-value").html(fiat_value);
-    $("." + crypto_symbol.toLowerCase() + "-fiat-exchange").html(exchange);
-    $("." + crypto_symbol.toLowerCase() + "-fiat-exchange-units").html(exchange_units);
+
     update_wallet_total(crypto_symbol);
     update_overall_fiat_total();
+}
+
+function update_wallet_total(crypto_symbol) {
+    // for a passed in crypto-symbol ('btc', 'ltc', etc) add up
+    // all addresses, and then put that into the header.
+    var crypto_symbol = crypto_symbol.toLowerCase()
+    var wallet = $('.wallet-' + crypto_symbol);
+    var addresses = wallet.find('.address-value');
+    var wallet_total = 0;
+
+    $.each(addresses, function(i, address) {
+        wallet_total += Number(clean_number($(address).text()));
+    });
+    wallet.find('.wallet-total-crypto').text(format_crypto(wallet_total));
+
+    var exchange_rate = clean_number($('.' + crypto_symbol + '-fiat-exchange').first().text());
+    var fiat_total = exchange_rate * wallet_total;
+    wallet.find('.wallet-total-fiat').text(format_fiat(fiat_total));
+}
+
+function update_wallet_exchange_rate(crypto_symbol, data) {
+    // data is the response from the /wallets/get_exchange_rate api call.
+    var crypto_symbol = crypto_symbol.toLowerCase();
+    var new_ex_rate = data['exchange_rate'];
+    var new_source = data['price_source'];
+    var units = data['fiat_symbol'] + "/" + data['crypto_symbol'].toUpperCase();
+    $('.' + crypto_symbol + '-fiat-exchange').text(new_ex_rate);
+    $('.' + crypto_symbol + '-fiat-exchange-units').text(units);
 }
 
 function make_tx_html(transaction, cardinal, crypto_symbol) {
@@ -163,120 +183,64 @@ function initialize_webcam(video) {
         }
     );
 }
+function reload_currency_exchange(crypto_symbol) {
+    //
+    var spinner = $(this).next();
+    var fiat_symbol = $('.fiat-symbol').first().text();
+    spinner.show();
 
-function update_wallet_total(crypto_symbol) {
-    // for a passed in crypto-symbol ('btc', 'ltc', etc) add up
-    // all addresses, and then put that into the header.
-    var crypto_symbol = crypto_symbol.toLowerCase()
-    var wallet = $('.wallet-' + crypto_symbol);
-    var addresses = wallet.find('.address-value');
-    var wallet_total = 0;
-
-    $.each(addresses, function(i, address) {
-        wallet_total += Number(clean_number($(address).text()));
+    return $.ajax({
+        url: '/wallets/get_exchange_rate',
+        data: {
+            crypto: crypto_symbol,
+            fiat: fiat_symbol
+        }
+    }).success(function(response) {
+        update_wallet_exchange_rate(crypto_symbol, response);
+    }).complete(function() {
+        spinner.hide();
     });
-    wallet.find('.wallet-total-crypto').text(format_crypto(wallet_total));
+}
+function reload_address_price(js_id) {
+    // Get the current price from the backend, and then update the
+    // front end with new wallet totals.
+    var wallet = $("#" + js_id);
+    var spinner = wallet.find(".price-spinner");
+    var fiat_symbol = $('.fiat-symbol').first().text();
 
-    var exchange_rate = clean_number($('.' + crypto_symbol + '-fiat-exchange').first().text());
-    var fiat_total = exchange_rate * wallet_total;
-    wallet.find('.wallet-total-fiat').text(format_fiat(fiat_total));
+    spinner.show();
+    $("#overall-spinner").show();
+
+    return $.ajax({
+        url: "/wallets/value",
+        data: {
+            js_id: js_id,
+            fiat: fiat_symbol
+        }
+    }).success(function(data) {
+        // returned will be new totals for this wallet
+        // plug into front end.
+        update_address_balance(js_id, data);
+    }).error(function(response) {
+        wallet.find('.error').html("<pre>" + response.responseText + "</pre>");
+    }).complete(function() {
+        spinner.hide();
+        $("#overall-spinner").hide();
+    });
 }
 
 $(function() {
-    $("#new-wallet").click(function() {
-        $("#new-wallet-modal").bPopup();
-    });
 
     $('.reload-currency-exchange').click(function(event) {
         event.preventDefault();
-        var crypto_symbol = $(this).data('crypto-symbol');
-        var fiat_symbol = $('.fiat-symbol').first().text();
-
-        $.ajax({
-            url: '/wallets/get_exchange_rate',
-            data: {
-                crypto: crypto_symbol,
-                fiat: fiat_symbol
-            }
-        }).success(function(response) {
-            var new_ex_rate = response['exchange_rate'];
-            var new_source = response['price_source'];
-            console.error("Not implemented yet");
-
-
-        });
+        var crypto_symbol = $(this).data('crypto-symbol').toLowerCase()
+        reload_currency_exchange(crypto_symbol);
     });
-
-    $(".show-transactions").click(function(event) {
-        // Get transactions from backend, then plug them into the DOM.
-        event.preventDefault();
-        var show_transaction = $(this);
-        var wallet_id = show_transaction.data("wallet-id");
-        var crypto_symbol = show_transaction.data("crypto-symbol");
-        var fiat_symbol = $("#fiat-currency").val();
-        var js_id = crypto_symbol + "-" + wallet_id;
-        var spinner = show_transaction.next();
-        var container = spinner.next();
-        spinner.show();
-
-        $.ajax({
-            url: "/wallets/transactions",
-            data: {
-                js_id: js_id,
-                fiat: fiat_symbol,
-            },
-        }).success(function(transactions) {
-            container.find("tr").remove();
-            $.each(transactions.reverse(), function(i, transaction) {
-                html = make_tx_html(transaction, i + 1, crypto_symbol);
-                container.html(container.html() + html);
-            })
-        }).error(function(response) {
-            // dump error message to the screen, figure it out later.
-            container.html("<tr><td><pre>" + response.responseText + "</pre></td><tr>");
-        }).complete(function() {
-            spinner.hide();
-        });
-        $(this).hide();
-        $(this).prev().show(); // show the 'hide transactions' button.
-    });
-
-    $(".hide-transactions").click(function(event) {
-        event.preventDefault();
-        $(this).next().next().next().find('tr').remove(); // hide transactions section
-        $(this).next().show(); // show 'show transaction' button
-        $(this).hide();
-    });
-
-    $(".reload-address-price").click(function(event) {
-        // Get the current price from the backend, and then update the
-        // front end with new wallet totals.
+    $(".reload-address-price").click(function() {
         event.preventDefault();
         var wallet_id = $(this).data('wallet-id');
         var crypto_symbol = $(this).data('crypto-symbol');
-        var wallet = $("#" + wallet_id);
-        var spinner = wallet.find(".price-spinner");
-        var fiat_symbol = $('.fiat-symbol').first().text();
-
-        spinner.show();
-        $("#overall-spinner").show();
-
-        $.ajax({
-            url: "/wallets/value",
-            data: {
-                js_id: wallet_id,
-                fiat: fiat_symbol
-            }
-        }).success(function(data) {
-            // returned will be new totals for this wallet
-            // plug into front end.
-            update_address_balance(wallet_id, data);
-        }).error(function(response) {
-            wallet.find('.error').html("<pre>" + response.responseText + "</pre>");
-        }).complete(function() {
-            spinner.hide();
-            $("#overall-spinner").hide();
-        });
+        reload_address_price(js_id);
     });
 
     $(".launch-public-qr-modal").click(function(event) {
@@ -353,5 +317,50 @@ $(function() {
                 });
             }
         );
+    });
+
+    $("#new-wallet").click(function() {
+        $("#new-wallet-modal").bPopup();
+    });
+
+    $(".show-transactions").click(function(event) {
+        // Get transactions from backend, then plug them into the DOM.
+        event.preventDefault();
+        var show_transaction = $(this);
+        var wallet_id = show_transaction.data("wallet-id");
+        var crypto_symbol = show_transaction.data("crypto-symbol");
+        var fiat_symbol = $("#fiat-currency").val();
+        var js_id = crypto_symbol + "-" + wallet_id;
+        var spinner = show_transaction.next();
+        var container = spinner.next();
+        spinner.show();
+
+        $.ajax({
+            url: "/wallets/transactions",
+            data: {
+                js_id: js_id,
+                fiat: fiat_symbol,
+            },
+        }).success(function(transactions) {
+            container.find("tr").remove();
+            $.each(transactions.reverse(), function(i, transaction) {
+                html = make_tx_html(transaction, i + 1, crypto_symbol);
+                container.html(container.html() + html);
+            })
+        }).error(function(response) {
+            // dump error message to the screen, figure it out later.
+            container.html("<tr><td><pre>" + response.responseText + "</pre></td><tr>");
+        }).complete(function() {
+            spinner.hide();
+        });
+        $(this).hide();
+        $(this).prev().show(); // show the 'hide transactions' button.
+    });
+
+    $(".hide-transactions").click(function(event) {
+        event.preventDefault();
+        $(this).next().next().next().find('tr').remove(); // hide transactions section
+        $(this).next().show(); // show 'show transaction' button
+        $(this).hide();
     });
 });

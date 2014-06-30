@@ -79,21 +79,15 @@ def get_value(request):
     wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
         owner__id=request.user.id
     ).get()
-    j = wallet.price_json(hard_refresh=True, fiat_symbol=fiat_symbol)
+    j = wallet.price_json(hard_refresh=False, fiat_symbol=fiat_symbol)
     return HttpResponse(j, content_type="application/json")
 
 def get_exchange_rate(request):
     crypto_symbol = request.GET.get('crypto', 'btc')
     fiat_symbol = request.GET.get('fiat', 'usd')
-    Wallet = wallet_classes[crypto_symbol]
-    exchange = Wallet.get_fiat_exchange(fiat_symbol, hard_refresh=True)
-    j = {
-        'fiat_symbol': fiat_symbol,
-        'crypto_symbol': crypto_symbol,
-        'exchange_rate': exchange,
-        'price_source': Wallet.price_source
-    }
-    return HttpResponse(json.dumps(j), content_type="application/json")
+    Wallet = wallet_classes[crypto_symbol.lower()]
+    j = Wallet.exchange_rate_json(hard_refresh=False, fiat_symbol=fiat_symbol)
+    return HttpResponse(j, content_type="application/json")
 
 @login_required
 def get_private_key(request):

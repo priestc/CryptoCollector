@@ -32,6 +32,7 @@
         <span id="total-fiat-amount"></span>
         <select id="fiat-currency-selector">
             <option value="usd">USD</option>
+            <option value="btc">BTC</option>
             <option value="eur">EUR</option>
             <option value="cny">CNY</option>
         </select>
@@ -145,7 +146,7 @@
                         <span>=</span>
                         <span class="address-fiat-value">{# gets filled in at the bottom in js #}</span>
                         <span class="fiat-symbol"></span>
-                        <a href="#" class="reload reload-address-price" data-crypto-symbol="{{ crypto_symbol }}" data-wallet-id="{{ wallet.js_id }}">&#x21bb;</a>
+                        <a href="#" class="reload reload-address-price" data-crypto-symbol="{{ crypto_symbol }}" data-js-id="{{ wallet.js_id }}">&#x21bb;</a>
                         <img class="spinner price-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <span class="error"></span>
                     </td>
@@ -234,12 +235,21 @@
         if(localStorage['fiat-currency-selector']) {
             $("#fiat-currency-selector").val(localStorage['fiat-currency-selector']).trigger('change');
         }
+
         // Done this way so that all number formatting goes through one place.
         {% for crypto_symbol, addresses in wallets_for_all_currencies.items %}
         {% for address in addresses %}
-        {% if forloop.first %}tx_external_link_templates["{{ crypto_symbol }}"] = "{{ address.tx_external_link_template }}";{% endif %}
-        update_address_balance('{{ address.js_id }}', {{ address.price_json|safe }});
-        {% if forloop.last %}update_wallet_total("{{ crypto_symbol }}");{% endif %}
+        {% if forloop.first %}
+        //update_wallet_exchange_rate("{{ crypto_symbol }}", {{ address.exchange_rate_json|safe }});
+
+        tx_external_link_templates["{{ crypto_symbol }}"] = "{{ address.tx_external_link_template }}";
+        reload_currency_exchange("{{ crypto_symbol }}").complete(function() {
+        {% endif %}
+            //update_address_balance('{{ address.js_id }}', {{ address.price_json|safe }});
+            reload_address_price('{{ address.js_id }}');
+        {% if forloop.last %}
+        });
+        update_wallet_total("{{ crypto_symbol }}");{% endif %}
         {% endfor %}
         {% endfor %}
         update_overall_fiat_total();
