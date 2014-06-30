@@ -52,11 +52,15 @@ function format_fiat(num) {
     return numberWithCommas(num.toFixed(2));
 }
 
+function format_crypto(num) {
+    return numberWithCommas(num.toPrecision(5));
+}
+
 function update_overall_fiat_total() {
     // Get the totals from each wallet and add them up.
     // Stick that number into the DOM.
     var total = 0;
-    $(".fiat-value").each(function(i, element) {
+    $(".wallet-total-fiat").each(function(i, element) {
         var number_with_commas = $(element).html();
         total += Number(number_with_commas.replace(",", ''));
     });
@@ -163,14 +167,12 @@ function update_wallet_total(crypto_symbol) {
     var wallet_total = 0;
 
     $.each(addresses, function(i, address) {
-        wallet_total += Number($(address).text());
+        wallet_total += Number($(address).text().replace(',', ''));
     });
-
-    wallet.find('.wallet-total-crypto').text(wallet_total);
+    wallet.find('.wallet-total-crypto').text(format_crypto(wallet_total));
 
     var exchange_rate = $('.' + crypto_symbol + '-fiat-exchange').first().text();
     var fiat_total = exchange_rate * wallet_total;
-    console.log(exchange_rate);
     wallet.find('.wallet-total-fiat').text(format_fiat(fiat_total));
 }
 
