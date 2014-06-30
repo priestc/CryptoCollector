@@ -184,14 +184,18 @@ $(function() {
     $('.reload-currency-exchange').click(function(event) {
         event.preventDefault();
         var crypto_symbol = $(this).data('crypto-symbol');
-        var url = '/wallets/get_exchange_rate?crypto={0}&fiat={1}';
-        var fiat_symbol = $("#fiat-currency").val();
-
+        var fiat_symbol = $('.fiat-symbol').first().text();
+        console.log("fiat symbol:", fiat_symbol);
         $.ajax({
-            url: String.format(url, crypto_symbol, fiat_symbol)
+            url: '/wallets/get_exchange_rate',
+            data: {
+                crypto: crypto_symbol,
+                fiat: fiat_symbol
+            }
         }).success(function(response) {
             var new_ex_rate = response['exchange_rate'];
             var new_source = response['price_source'];
+            console.error("Not implemented yet");
         });
     });
 
@@ -244,12 +248,17 @@ $(function() {
         var crypto_symbol = $(this).data('crypto-symbol');
         var wallet = $("#" + wallet_id);
         var spinner = wallet.find(".price-spinner");
+        var fiat_symbol = $('.fiat-symbol').first().text();
+
         spinner.show();
         $("#overall-spinner").show();
 
         $.ajax({
             url: "/wallets/value",
-            data: {js_id: wallet_id}
+            data: {
+                js_id: wallet_id,
+                fiat: fiat_symbol
+            }
         }).success(function(data) {
             // returned will be new totals for this wallet
             // plug into front end.

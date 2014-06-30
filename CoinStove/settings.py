@@ -93,4 +93,4 @@ CACHES = {
     }
 }
 
-HISTORICAL_DOMAIN = 'localhost:9000'
+HISTORICAL_DOMAIN = 'coinsentry.pw'

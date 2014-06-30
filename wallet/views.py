@@ -117,7 +117,7 @@ def save_private_key(request):
 @login_required
 def paper_wallet(request):
     """
-    Either pass in a single jsid is a wallet, or pass in nothing to generate
+    Either pass in a single jsid of a wallet, or pass in nothing to generate
     a page with all the paper wallets from your account. It skips wallets
     that do not have a private key, and that have no value stored in them.
     """
