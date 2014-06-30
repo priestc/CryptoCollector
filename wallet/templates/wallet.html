@@ -238,7 +238,7 @@
         {% for crypto_symbol, addresses in wallets_for_all_currencies.items %}
         {% for address in addresses %}
         {% if forloop.first %}tx_external_link_templates["{{ crypto_symbol }}"] = "{{ address.tx_external_link_template }}";{% endif %}
-        update_DOM_with_price_for_address('{{ address.js_id }}', {{ address.price_json|safe }});
+        update_address_balance('{{ address.js_id }}', {{ address.price_json|safe }});
         {% if forloop.last %}update_wallet_total("{{ crypto_symbol }}");{% endif %}
         {% endfor %}
         {% endfor %}

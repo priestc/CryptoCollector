@@ -56,19 +56,23 @@ function format_crypto(num) {
     return numberWithCommas(num.toPrecision(5));
 }
 
+function clean_number(num) {
+    return num.replace(',', '');
+}
+
 function update_overall_fiat_total() {
     // Get the totals from each wallet and add them up.
     // Stick that number into the DOM.
     var total = 0;
     $(".wallet-total-fiat").each(function(i, element) {
         var number_with_commas = $(element).html();
-        total += Number(number_with_commas.replace(",", ''));
+        total += Number(clean_number(number_with_commas));
     });
     var with_commas = total.toLocaleString();
     $("title").text(with_commas + " - CoinStove");
     $("#total-fiat-amount").html(with_commas);
 }
-function update_DOM_with_price_for_address(js_id, data) {
+function update_address_balance(js_id, data) {
     // from a dict of new prices for an address, update the DOM
     // gets called after ajax call to get updated price.
     // Updates the wallet, exchange, and fiat value.
@@ -87,9 +91,10 @@ function update_DOM_with_price_for_address(js_id, data) {
 
     $("#" + js_id + " .address-value").html(wallet_value);
     $("#" + js_id + " .address-fiat-value").html(fiat_value);
-
     $("." + crypto_symbol.toLowerCase() + "-fiat-exchange").html(exchange);
     $("." + crypto_symbol.toLowerCase() + "-fiat-exchange-units").html(exchange_units);
+    update_wallet_total(crypto_symbol);
+    update_overall_fiat_total();
 }
 
 function make_tx_html(transaction, cardinal, crypto_symbol) {
@@ -162,16 +167,17 @@ function initialize_webcam(video) {
 function update_wallet_total(crypto_symbol) {
     // for a passed in crypto-symbol ('btc', 'ltc', etc) add up
     // all addresses, and then put that into the header.
-    var wallet = $('.wallet-' + crypto_symbol.toLowerCase());
+    var crypto_symbol = crypto_symbol.toLowerCase()
+    var wallet = $('.wallet-' + crypto_symbol);
     var addresses = wallet.find('.address-value');
     var wallet_total = 0;
 
     $.each(addresses, function(i, address) {
-        wallet_total += Number($(address).text().replace(',', ''));
+        wallet_total += Number(clean_number($(address).text()));
     });
     wallet.find('.wallet-total-crypto').text(format_crypto(wallet_total));
 
-    var exchange_rate = $('.' + crypto_symbol + '-fiat-exchange').first().text();
+    var exchange_rate = clean_number($('.' + crypto_symbol + '-fiat-exchange').first().text());
     var fiat_total = exchange_rate * wallet_total;
     wallet.find('.wallet-total-fiat').text(format_fiat(fiat_total));
 }
@@ -185,7 +191,7 @@ $(function() {
         event.preventDefault();
         var crypto_symbol = $(this).data('crypto-symbol');
         var fiat_symbol = $('.fiat-symbol').first().text();
-        console.log("fiat symbol:", fiat_symbol);
+
         $.ajax({
             url: '/wallets/get_exchange_rate',
             data: {
@@ -196,6 +202,8 @@ $(function() {
             var new_ex_rate = response['exchange_rate'];
             var new_source = response['price_source'];
             console.error("Not implemented yet");
+
+
         });
     });
 
@@ -262,9 +270,7 @@ $(function() {
         }).success(function(data) {
             // returned will be new totals for this wallet
             // plug into front end.
-            update_DOM_with_price_for_address(wallet_id, data);
-            update_wallet_total(crypto_symbol);
-            update_overall_fiat_total();
+            update_address_balance(wallet_id, data);
         }).error(function(response) {
             wallet.find('.error').html("<pre>" + response.responseText + "</pre>");
         }).complete(function() {
