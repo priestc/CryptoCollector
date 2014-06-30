@@ -85,7 +85,7 @@ def get_exchange_rate(request):
     crypto_symbol = request.GET['crypto']
     fiat_symbol = request.GET['fiat']
     Wallet = wallet_classes[crypto_symbol.lower()]
-    j = Wallet.exchange_rate_json(hard_refresh=True, fiat_symbol=fiat_symbol)
+    j = Wallet.exchange_rate_json(hard_refresh=False, fiat_symbol=fiat_symbol)
     return HttpResponse(j, content_type="application/json")
 
 @login_required

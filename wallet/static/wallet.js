@@ -200,16 +200,23 @@ function reload_currency_exchange(crypto_symbol) {
         spinner.hide();
     });
 }
-function reload_address_price(js_id) {
+function reload_address_price(js_id, standalone) {
     // Get the current price from the backend, and then update the
     // front end with new wallet totals.
+    // `standalone` means this function was not called as part of a batch
+    // therefore the overall spinner needs to be hidden after the ajax call.
+    // otherwise, the spinner will be turned off at a different time.
+
     var wallet = $("#" + js_id);
     var spinner = wallet.find(".price-spinner");
     var fiat_symbol = $('.fiat-symbol').first().text();
 
     spinner.show();
-    $("#overall-spinner").show();
 
+    if(standalone) {
+        $("#overall-spinner").show();
+    }
+    
     return $.ajax({
         url: "/wallets/value",
         data: {
@@ -224,7 +231,9 @@ function reload_address_price(js_id) {
         wallet.find('.error').html("<pre>" + response.responseText + "</pre>");
     }).complete(function() {
         spinner.hide();
-        $("#overall-spinner").hide();
+        if(standalone) {
+            $("#overall-spinner").hide();
+        }
     });
 }
 
@@ -237,9 +246,9 @@ $(function() {
     });
     $(".reload-address-price").click(function() {
         event.preventDefault();
-        var wallet_id = $(this).data('wallet-id');
+        var js_id = $(this).data('js-id');
         var crypto_symbol = $(this).data('crypto-symbol');
-        reload_address_price(js_id);
+        reload_address_price(js_id, true);
     });
 
     $(".launch-public-qr-modal").click(function(event) {
