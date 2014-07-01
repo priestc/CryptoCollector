@@ -48,7 +48,7 @@
 
     {% for crypto_symbol, wallets in wallets_for_all_currencies.items %}
         {% if wallets %}
-        <div class="wallet wallet-{{ wallets.0.symbol|lower }}">
+        <div class="wallet wallet-{{ crypto_symbol }}">
             <table class="wallet-top-section">
                 <tr>
                     <td class="logo">
@@ -60,6 +60,10 @@
                         <span class="{{ crypto_symbol }}-fiat-exchange-units"></span>
                         <a href="#" class="reload reload-currency-exchange" data-crypto-symbol="{{ crypto_symbol }}">&#x21bb;</a>
                         <img class="spinner exchange-rate-spinner" src="/static/spinner16.gif" height="16" width="16">
+                        <br>
+                        {{ wallets|length }} Address{{ wallets|length|pluralize:"es" }}
+                        <a href="#" class="show-addresses">show</a>
+                        <a href="#" class="hide-addresses">hide</a>
                     </td>
                     <td class="wallet-totals">
                         <span class="wallet-total-crypto"></span> {{ crypto_symbol|upper }}<br>
@@ -67,6 +71,7 @@
                     </td>
                 </tr>
             </table>
+            <div class="addresses-container">
             {% for wallet in wallets %}
             <hr>
             <table class="wallet-address-details" id="{{ wallet.js_id }}">
@@ -181,9 +186,11 @@
                 </tr>
             </table>
             {% endfor %}
+            </div>
         </div>
         {% endif %}
     {% endfor %}
+    </div>
 </div>
 
 <div id="new-wallet-modal" class="modal">

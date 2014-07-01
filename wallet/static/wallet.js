@@ -57,7 +57,7 @@ function format_crypto(num) {
 }
 
 function clean_number(num) {
-    return num.replace(',', '');
+    return num.replace(/,/g, '');
 }
 
 function update_overall_fiat_total() {
@@ -98,7 +98,9 @@ function update_wallet_total(crypto_symbol) {
     var wallet_total = 0;
 
     $.each(addresses, function(i, address) {
-        wallet_total += Number(clean_number($(address).text()));
+        var num = $(address).text();
+        var cleaned = clean_number(num);
+        wallet_total += Number(cleaned);
     });
     wallet.find('.wallet-total-crypto').text(format_crypto(wallet_total));
 
@@ -216,7 +218,7 @@ function reload_address_price(js_id, standalone) {
     if(standalone) {
         $("#overall-spinner").show();
     }
-    
+
     return $.ajax({
         url: "/wallets/value",
         data: {
@@ -369,6 +371,23 @@ $(function() {
         event.preventDefault();
         $(this).next().next().next().find('tr').remove(); // hide transactions section
         $(this).next().show(); // show 'show transaction' button
+        $(this).hide();
+    });
+
+    $(".show-addresses").click(function(event) {
+        event.preventDefault();
+        var hide_link = $(this).next();
+        var container = $(this).parents('.wallet').find('.addresses-container');
+        hide_link.show();
+        container.show();
+        $(this).hide();
+    });
+    $(".hide-addresses").click(function(event) {
+        event.preventDefault();
+        var show_link = $(this).prev();
+        var container = $(this).parents('.wallet').find('.addresses-container');
+        show_link.show();
+        container.hide();
         $(this).hide();
     });
 });

@@ -65,6 +65,12 @@ input[name=private_key] {
     width: 128px;
 }
 
+.addresses-container {
+    display: none;
+}
+.hide-addresses{
+    display: none
+}
 td.wallet-totals {
     padding-right: 10px;
     font-size: large;
@@ -159,6 +165,20 @@ a.reload:hover {
 }
 .wallet-ppc {
     background: pink;
+}
+.wallet-drk {
+    background: navy;
+    color: lightgray;
+}
+.wallet-drk a {
+    color: tan;
+}
+.wallet-rdd {
+    background: #ebffcd;
+}
+
+.wallet-myr {
+    background: #d0cfff;
 }
 .wallet-vtc {
     background: lime;

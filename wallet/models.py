@@ -169,7 +169,7 @@ class CryptoWallet(models.Model):
         Make a call to an external service and get all transactions for this
         address.
         """
-        raise NotImplementedError()
+        raise NotImplementedError("No external source defined for listing %s transactions" % self.symbol)
 
     @classmethod
     def get_historical_price(self, date, fiat_symbol='usd'):
@@ -467,13 +467,47 @@ class NextWallet(CryptoWallet):
             transactions.append(t)
         return transactions
 
+class DarkcoinWallet(CryptoWallet):
+    symbol = 'DRK'
+    full_name = 'Darkcoin'
+    price_source = 'cryptocoincharts.info'
+    tx_external_link_template = "{0}"
+    addres = 'XrbZsLp9QDSf8usYYMPhmKWA8u1kQ26rQJ'
+
+    def get_value(self, **k):
+        return 15.0
+
+
+class ReddcoinWallet(CryptoWallet):
+    symbol = 'RDD'
+    full_name = 'Reddcoin'
+    price_source = 'cryptocoincharts.info'
+    tx_external_link_template = "{0}"
+    addres = 'RbHsU84Eo5tUBj7HDNEb9ZSw2fFhU1NKgD'
+
+    def get_value(self, **k):
+        return 1000000
+
+
+class MyriadcoinWallet(CryptoWallet):
+    symbol = 'MYR'
+    full_name = 'Myriadcoin'
+    price_source = 'cryptocoincharts.info'
+    tx_external_link_template = "{0}"
+    address = 'MHEipvGqerT3XDp2hq62xtnCujS4qL67DZ'
+
+    def get_value(self, **kwargs):
+        return 100000
 
 wallet_classes = OrderedDict((
     ('btc', BitcoinWallet),
     ('ltc', LitecoinWallet),
     ('doge', DogecoinWallet),
     ('ppc', PeercoinWallet),
+    ('drk', DarkcoinWallet),
+    ('rdd', ReddcoinWallet),
     ('vtc', VertcoinWallet),
+    ('myr', MyriadcoinWallet),
     ('ftc', FeathercoinWallet),
     ('nxt', NextWallet),
 ))
