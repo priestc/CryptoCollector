@@ -56,8 +56,8 @@
                     </td>
                     <td>
                         <h2>{{ wallets.0.symbol }} - {{ wallets.0.full_name }}</h2>
-                        <span class="{{ crypto_symbol }}-fiat-exchange"></span>
-                        <span class="{{ crypto_symbol }}-fiat-exchange-units"></span>
+                        <span class="fiat-exchange"></span>
+                        <span class="fiat-exchange-units"></span> <span class="fiat-exchange-source"></span>
                         <a href="#" class="reload reload-currency-exchange" data-crypto-symbol="{{ crypto_symbol }}">&#x21bb;</a>
                         <img class="spinner exchange-rate-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <br>
@@ -144,7 +144,7 @@
                     <td class="balance">
                         <span class="address-value">{# gets filled in at the bottom in js #}</span>
                         <span>{{ wallet.symbol }} &times;</span>
-                        <span class="{{ crypto_symbol }}-fiat-exchange" title="Price from: {{ wallet.price_source }}">
+                        <span class="{{ crypto_symbol }}-fiat-exchange">
                         {# gets filled in at the bottom in js #}
                         </span>
                         <span class="{{ crypto_symbol }}-fiat-exchange-units"></span>

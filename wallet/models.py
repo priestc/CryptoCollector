@@ -87,15 +87,10 @@ class CryptoWallet(models.Model):
         Return a json encoded dict of price info. This data format is used for
         various things on the front end.
         """
-        try:
-            value = self.get_value(hard_refresh=hard_refresh)
-        except:
-            raise Exception("Can't get address value: %s" % self.symbol)
-
+        value = self.get_value(hard_refresh=hard_refresh)
         return json.dumps({
             'wallet_value': value,
             'crypto_symbol': self.symbol.upper(),
-            'price_source': self.price_source,
         })
 
     @classmethod
@@ -106,14 +101,15 @@ class CryptoWallet(models.Model):
         """
         if cls.symbol.lower() == fiat_symbol.lower():
             exchange = 1.0
+            source = "math"
         else:
-            exchange = cls.get_fiat_exchange(fiat_symbol, hard_refresh=hard_refresh)
+            exchange, source = cls.get_fiat_exchange(fiat_symbol, hard_refresh=hard_refresh)
 
         return json.dumps({
             'fiat_symbol': fiat_symbol.upper(),
             'crypto_symbol': cls.symbol.upper(),
             'exchange_rate': exchange,
-            'price_source': cls.price_source
+            'price_source': source
         })
 
     def js_id(self):
@@ -140,13 +136,13 @@ class CryptoWallet(models.Model):
             raise exc
 
         try:
-            exchange = self.get_fiat_exchange(fiat)
+            exchange, source = self.get_fiat_exchange(fiat)
         except Exception as exc:
             raise Exception("ACK")
             exc.message = "Failed to get exchange rate for %s/%s" % (fiat, self.symbol)
             raise exc
 
-        return val * exchange
+        return val * exchange, source
 
     def get_value(self):
         """
@@ -183,11 +179,13 @@ class CryptoWallet(models.Model):
     @classmethod
     @bypassable_cache
     def get_fiat_exchange(cls, fiat_symbol='usd'):
+        """
+        """
         url="http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
             cls.symbol, fiat_symbol
         )
         response = fetch_url(url).json()
-        return float(response['price'])
+        return float(response['price']), response['best_market']
 
     @classmethod
     def generate_new_keypair(cls):
@@ -232,7 +230,6 @@ class Transaction(object):
 class BitcoinWallet(CryptoWallet):
     symbol = 'BTC'
     full_name = 'Bitcoin'
-    price_source = 'coinbase.com'
     tx_external_link_template = "http://blockchain.info/tx/{0}"
 
     @bypassable_cache
@@ -272,7 +269,6 @@ class BitcoinWallet(CryptoWallet):
 class LitecoinWallet(CryptoWallet):
     symbol = "LTC"
     full_name = 'Litecoin'
-    price_source = "btc-e"
     tx_external_link_template = "http://explorer.litecoin.net/tx/{0}"
 
     @bypassable_cache
@@ -308,7 +304,6 @@ class LitecoinWallet(CryptoWallet):
 class DogecoinWallet(CryptoWallet):
     symbol = "DOGE"
     full_name = 'Dogecoin'
-    price_source = 'dogeapi.com'
     tx_external_link_template = 'http://dogechain.info/tx/{0}'
 
     @bypassable_cache
@@ -359,7 +354,6 @@ class DogecoinWallet(CryptoWallet):
 class PeercoinWallet(CryptoWallet):
     symbol = "PPC"
     full_name = 'Peercoin'
-    price_source = 'btc-e'
     tx_external_link_template = "http://bkchain.org/ppc/tx/{0}"
 
     @bypassable_cache
@@ -406,7 +400,6 @@ class PeercoinWallet(CryptoWallet):
 class FeathercoinWallet(CryptoWallet):
     symbol = 'FTC'
     full_name = 'Feathercoin'
-    price_source = 'api.feathercoin.com'
     tx_external_link_template = "http://explorer.feathercoin.com/tx/{0}"
 
     @bypassable_cache
@@ -427,7 +420,6 @@ class FeathercoinWallet(CryptoWallet):
 class VertcoinWallet(CryptoWallet):
     symbol = 'VTC'
     full_name = 'Vertcoin'
-    price_source = 'cryptocoincharts.info'
     tx_external_link_template = "http://explorer.obi.vg/tx/{0}"
 
     @bypassable_cache
@@ -440,7 +432,6 @@ class VertcoinWallet(CryptoWallet):
 class NextWallet(CryptoWallet):
     symbol = 'NXT'
     full_name = 'Next'
-    price_source = 'cryptocoincharts.info'
     tx_external_link_template = "http://nxtexplorer.com/nxt/nxt.cgi?action=2000&tra={0}"
 
     @bypassable_cache
@@ -470,7 +461,6 @@ class NextWallet(CryptoWallet):
 class DarkcoinWallet(CryptoWallet):
     symbol = 'DRK'
     full_name = 'Darkcoin'
-    price_source = 'cryptocoincharts.info'
     tx_external_link_template = "{0}"
     addres = 'XrbZsLp9QDSf8usYYMPhmKWA8u1kQ26rQJ'
 
@@ -481,7 +471,6 @@ class DarkcoinWallet(CryptoWallet):
 class ReddcoinWallet(CryptoWallet):
     symbol = 'RDD'
     full_name = 'Reddcoin'
-    price_source = 'cryptocoincharts.info'
     tx_external_link_template = "{0}"
     addres = 'RbHsU84Eo5tUBj7HDNEb9ZSw2fFhU1NKgD'
 
@@ -492,7 +481,6 @@ class ReddcoinWallet(CryptoWallet):
 class MyriadcoinWallet(CryptoWallet):
     symbol = 'MYR'
     full_name = 'Myriadcoin'
-    price_source = 'cryptocoincharts.info'
     tx_external_link_template = "{0}"
     address = 'MHEipvGqerT3XDp2hq62xtnCujS4qL67DZ'
 

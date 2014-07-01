@@ -104,7 +104,7 @@ function update_wallet_total(crypto_symbol) {
     });
     wallet.find('.wallet-total-crypto').text(format_crypto(wallet_total));
 
-    var exchange_rate = clean_number($('.' + crypto_symbol + '-fiat-exchange').first().text());
+    var exchange_rate = clean_number($('.wallet-' + crypto_symbol).find('.fiat-exchange').text());
     var fiat_total = exchange_rate * wallet_total;
     wallet.find('.wallet-total-fiat').text(format_fiat(fiat_total));
 }
@@ -112,11 +112,13 @@ function update_wallet_total(crypto_symbol) {
 function update_wallet_exchange_rate(crypto_symbol, data) {
     // data is the response from the /wallets/get_exchange_rate api call.
     var crypto_symbol = crypto_symbol.toLowerCase();
-    var new_ex_rate = data['exchange_rate'];
-    var new_source = data['price_source'];
-    var units = data['fiat_symbol'] + "/" + data['crypto_symbol'].toUpperCase();
-    $('.' + crypto_symbol + '-fiat-exchange').text(new_ex_rate);
-    $('.' + crypto_symbol + '-fiat-exchange-units').text(units);
+    var rate = data['exchange_rate'];
+    var source = '(via ' + data['price_source'] + ")";
+    var units = data['fiat_symbol'] + "/" + crypto_symbol.toUpperCase();
+
+    $('.wallet-' + crypto_symbol).find('.fiat-exchange').text(rate);
+    $('.wallet-' + crypto_symbol).find('.fiat-exchange-units').text(units);
+    $('.wallet-' + crypto_symbol).find('.fiat-exchange-source').text(source);
 }
 
 function make_tx_html(transaction, cardinal, crypto_symbol) {
