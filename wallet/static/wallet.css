@@ -1,6 +1,13 @@
 body {
     font-family: 'Helvetica';
 }
+.wallet-container {
+    width: 80%;
+    max-width: 1000px;
+    min-width: 600px;
+    margin: 0 auto 0 auto;
+    padding: 10px;
+}
 h1.overall_total {
     float: right;
 }
@@ -53,13 +60,10 @@ input[name=private_key] {
     padding: 5px;
     font-weight: bold;
 }
-.wallet-container {
-    width: 60%;
-    margin: 0 auto 0 auto;
-    padding: 10px;
-}
+
 .wallet-top-section {
     width: 100%;
+    cursor: pointer;
 }
 .wallet-top-section td.logo {
     width: 128px;
@@ -68,7 +72,7 @@ input[name=private_key] {
 .addresses-container {
     display: none;
 }
-.hide-addresses{
+.hide-addresses {
     display: none
 }
 td.wallet-totals {

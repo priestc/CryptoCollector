@@ -376,20 +376,28 @@ $(function() {
         $(this).hide();
     });
 
-    $(".show-addresses").click(function(event) {
-        event.preventDefault();
-        var hide_link = $(this).next();
-        var container = $(this).parents('.wallet').find('.addresses-container');
-        hide_link.show();
-        container.show();
-        $(this).hide();
+    $(".wallet-top-section").click(function(event) {
+        var top_section = $(this);
+        top_section.siblings('.addresses-container').toggle('fast', function() {
+            top_section.find('.hide-addresses').toggle();
+            top_section.find('.show-addresses').toggle();
+
+        });
     });
-    $(".hide-addresses").click(function(event) {
-        event.preventDefault();
-        var show_link = $(this).prev();
-        var container = $(this).parents('.wallet').find('.addresses-container');
-        show_link.show();
-        container.hide();
-        $(this).hide();
+
+    $("#fiat-currency-selector").change(function(event){
+        var fiat = $(this).val();
+        localStorage['fiat-currency-selector'] = fiat;
+        console.log("change fiat selector", $(this).val());
+        window.location.reload();
     });
+
+    if(localStorage['fiat-currency-selector']) {
+        var fiat = localStorage['fiat-currency-selector'];
+    } else {
+        var fiat = localStorage['fiat-currency-selector'] = 'usd';
+    }
+    $("#fiat-currency-selector").val(fiat);
+    $('.fiat-symbol').text(fiat.toUpperCase());
+
 });

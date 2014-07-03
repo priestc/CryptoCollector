@@ -62,8 +62,8 @@
                         <img class="spinner exchange-rate-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <br>
                         {{ wallets|length }} Address{{ wallets|length|pluralize:"es" }}
-                        <a href="#" class="show-addresses">show</a>
-                        <a href="#" class="hide-addresses">hide</a>
+                        <span class="show-addresses">(click to show)</a>
+                        <span class="hide-addresses">(click to hide)</a>
                     </td>
                     <td class="wallet-totals">
                         <span class="wallet-total-crypto"></span> {{ crypto_symbol|upper }}<br>
@@ -233,40 +233,30 @@
 <script>
     tx_external_link_templates = {};
     $(function() {
-        $("#fiat-currency-selector").change(function(event){
-            var fiat = $(this).val();
-            localStorage['fiat-currency-selector'] = fiat;
-            console.log("change fiat selector", $(this).val());
-            window.location.reload();
-        });
-
-        if(localStorage['fiat-currency-selector']) {
-            var fiat = localStorage['fiat-currency-selector'];
-            $("#fiat-currency-selector").val(fiat);
-            $('.fiat-symbol').text(fiat.toUpperCase());
-        }
-
-        var ajaxes = [];
-        var inner_ajaxes = [];
+        var price_ajaxes = [];
+        var address_ajaxes = [];
         $("#overall-spinner").show();
         // Done this way so that all number formatting goes through one place.
         {% for crypto_symbol, addresses in wallets_for_all_currencies.items %}
-        {% for address in addresses %}
-        {% if forloop.first %}
-        tx_external_link_templates["{{ crypto_symbol }}"] = "{{ address.tx_external_link_template }}";
-        ajaxes.push(reload_currency_exchange("{{ crypto_symbol }}").complete(function() {
-        {% endif %}
-            inner_ajaxes.push(reload_address_price('{{ address.js_id }}', false));
-        {% if forloop.last %}
-        }));
-        update_wallet_total("{{ crypto_symbol }}");{% endif %}
-        {% endfor %}
+            {% for address in addresses %}
+                {% if forloop.first %}
+                tx_external_link_templates["{{ crypto_symbol }}"] = "{{ address.tx_external_link_template }}";
+                price_ajaxes.push(reload_currency_exchange("{{ crypto_symbol }}").complete(function() {
+                {% endif %}
+
+                address_ajaxes.push(reload_address_price('{{ address.js_id }}', false));
+
+                {% if forloop.last %}
+                }));
+                update_wallet_total("{{ crypto_symbol }}");
+                {% endif %}
+            {% endfor %}
         {% endfor %}
 
-        $.when.apply(window, ajaxes).then(function() {
-            //console.log("all ajaxes finished");
-            $.when.apply(window, inner_ajaxes).then(function() {
-                //console.log("all inner ajaxes finished!!");
+        $.when.apply(window, price_ajaxes).then(function() {
+            // once all the price ajaxes are finished...
+            $.when.apply(window, address_ajaxes).then(function() {
+                // ...and all the wallet totals ajaxes have finished...
                 update_overall_fiat_total();
                 $("#overall-spinner").hide();
             });
