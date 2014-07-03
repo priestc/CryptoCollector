@@ -33,6 +33,7 @@
         <select id="fiat-currency-selector">
             <option value="usd">USD</option>
             <option value="btc">BTC</option>
+            <option value="cad">CAD</option>
             <option value="eur">EUR</option>
             <option value="cny">CNY</option>
         </select>
@@ -67,7 +68,7 @@
                     </td>
                     <td class="wallet-totals">
                         <span class="wallet-total-crypto"></span> {{ crypto_symbol|upper }}<br>
-                        <span class="wallet-total-fiat">350</span> <span class='fiat-symbol'></span>
+                        <span class="wallet-total-fiat"></span> <span class='fiat-symbol'></span>
                     </td>
                 </tr>
             </table>
@@ -150,7 +151,6 @@
                         <span class="{{ crypto_symbol }}-fiat-exchange-units"></span>
                         <span>=</span>
                         <span class="address-fiat-value">{# gets filled in at the bottom in js #}</span>
-                        <span class="fiat-symbol"></span>
                         <a href="#" class="reload reload-address-price" data-crypto-symbol="{{ crypto_symbol }}" data-js-id="{{ wallet.js_id }}">&#x21bb;</a>
                         <img class="spinner price-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <span class="error"></span>

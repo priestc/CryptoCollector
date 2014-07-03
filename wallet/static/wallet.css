@@ -68,7 +68,10 @@ input[name=private_key] {
 .wallet-top-section td.logo {
     width: 128px;
 }
-
+.price-fail {
+    color: red;
+    font-weight: bold
+}
 .addresses-container {
     display: none;
 }

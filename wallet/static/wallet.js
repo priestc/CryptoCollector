@@ -112,13 +112,22 @@ function update_wallet_total(crypto_symbol) {
 function update_wallet_exchange_rate(crypto_symbol, data) {
     // data is the response from the /wallets/get_exchange_rate api call.
     var crypto_symbol = crypto_symbol.toLowerCase();
-    var rate = data['exchange_rate'];
-    var source = '(via ' + data['price_source'] + ")";
-    var units = data['fiat_symbol'] + "/" + crypto_symbol.toUpperCase();
+    var wallet_element = $('.wallet-' + crypto_symbol);
 
-    $('.wallet-' + crypto_symbol).find('.fiat-exchange').text(rate);
-    $('.wallet-' + crypto_symbol).find('.fiat-exchange-units').text(units);
-    $('.wallet-' + crypto_symbol).find('.fiat-exchange-source').text(source);
+    var rate = data['exchange_rate'];
+
+    if(rate == 0) {
+        wallet_element.find('.fiat-exchange-source').html("<span class='price-fail'>&#9888; Price service not available</span>");
+        wallet_element.find('.fiat-exchange').text(0).hide();
+    } else {
+        var source = '(via ' + data['price_source'] + ")";
+        var units = data['fiat_symbol'] + "/" + crypto_symbol.toUpperCase();
+        wallet_element.find('.fiat-exchange-units').text(units);
+        wallet_element.find('.fiat-exchange-source').text(source);
+        wallet_element.find('.fiat-exchange').text(rate);
+    }
+
+
 }
 
 function make_tx_html(transaction, cardinal, crypto_symbol) {
@@ -245,10 +254,11 @@ $(function() {
 
     $('.reload-currency-exchange').click(function(event) {
         event.preventDefault();
+        event.stopPropagation()
         var crypto_symbol = $(this).data('crypto-symbol').toLowerCase()
         reload_currency_exchange(crypto_symbol);
     });
-    $(".reload-address-price").click(function() {
+    $(".reload-address-price").click(function(event) {
         event.preventDefault();
         var js_id = $(this).data('js-id');
         var crypto_symbol = $(this).data('crypto-symbol');
@@ -397,6 +407,7 @@ $(function() {
     } else {
         var fiat = localStorage['fiat-currency-selector'] = 'usd';
     }
+
     $("#fiat-currency-selector").val(fiat);
     $('.fiat-symbol').text(fiat.toUpperCase());
 

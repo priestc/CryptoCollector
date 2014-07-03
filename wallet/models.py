@@ -180,12 +180,14 @@ class CryptoWallet(models.Model):
     @bypassable_cache
     def get_fiat_exchange(cls, fiat_symbol='usd'):
         """
+        Make call to external price source and get the current trading price.
+        Currently, all prices come from cryptocoincharts.info.
         """
         url="http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
             cls.symbol, fiat_symbol
         )
         response = fetch_url(url).json()
-        return float(response['price']), response['best_market']
+        return float(response['price'] or 0), response['best_market']
 
     @classmethod
     def generate_new_keypair(cls):
