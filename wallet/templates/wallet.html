@@ -25,8 +25,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="wallet-container">
-    <h1 class="logo">CoinStove</h1>
+
+    <h1 class="logo">Wallets</h1>
     <h1 class='overall_total'>
         <img class="spinner" id="overall-spinner" src="/static/spinner16.gif" height="16" width="16">
         <span id="total-fiat-amount"></span>
@@ -34,13 +34,14 @@
             <option value="usd">USD</option>
             <option value="btc">BTC</option>
             <option value="cad">CAD</option>
+            <option value='rur'>RUR</option>
             <option value="eur">EUR</option>
             <option value="cny">CNY</option>
         </select>
     </h1>
     <div style="clear: both;"></div>
+    <div id="failures-detected">Some wallet totals could not be computed</div>
     <hr>
-
     <button id="new-wallet">Create New Wallet</button>
 
     {% if no_wallets %}
@@ -56,15 +57,21 @@
                         <img class="crypto-logo" src="/static/{{ crypto_symbol }}-logo.png" width="128" height="128">
                     </td>
                     <td>
-                        <h2>{{ wallets.0.symbol }} - {{ wallets.0.full_name }}</h2>
-                        <span class="fiat-exchange"></span>
-                        <span class="fiat-exchange-units"></span> <span class="fiat-exchange-source"></span>
+                        <h2>{{ crypto_symbol|upper }} - {{ wallets.0.full_name }}</h2>
+
+                        <span class="fiat-exchange-status"></span>
+                        <span class="fiat-exchange-rate"></span>
+                        <span class="fiat-exchange-units">
+                            <span class="fiat-symbol"></span>/{{ crypto_symbol|upper }}
+                        </span>
+                        <span class="fiat-exchange-source"></span>
+
                         <a href="#" class="reload reload-currency-exchange" data-crypto-symbol="{{ crypto_symbol }}">&#x21bb;</a>
                         <img class="spinner exchange-rate-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <br>
                         {{ wallets|length }} Address{{ wallets|length|pluralize:"es" }}
-                        <span class="show-addresses">(click to show)</a>
-                        <span class="hide-addresses">(click to hide)</a>
+                        <span class="show-addresses">(click to show)</span>
+                        <span class="hide-addresses">(click to hide)</span>
                     </td>
                     <td class="wallet-totals">
                         <span class="wallet-total-crypto"></span> {{ crypto_symbol|upper }}<br>
@@ -145,12 +152,14 @@
                     <td class="balance">
                         <span class="address-value">{# gets filled in at the bottom in js #}</span>
                         <span>{{ wallet.symbol }} &times;</span>
-                        <span class="{{ crypto_symbol }}-fiat-exchange">
+                        <span class="fiat-exchange-rate">
                         {# gets filled in at the bottom in js #}
                         </span>
-                        <span class="{{ crypto_symbol }}-fiat-exchange-units"></span>
+                        <span class="fiat-exchange-small-status"></span>
+                        <span>{{ crypto_symbol|upper }} / </span><span class="fiat-symbol"></span>
                         <span>=</span>
                         <span class="address-fiat-value">{# gets filled in at the bottom in js #}</span>
+                        <span class="fiat-symbol"></span>
                         <a href="#" class="reload reload-address-price" data-crypto-symbol="{{ crypto_symbol }}" data-js-id="{{ wallet.js_id }}">&#x21bb;</a>
                         <img class="spinner price-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <span class="error"></span>
@@ -223,7 +232,6 @@
             <input type="submit" value="Generate New Wallet Address">
         </form>
     </div>
-</div>
 
 {# Used in the QR code scanner. #}
 <canvas id="canvas" style="display: none"></canvas>
@@ -261,7 +269,6 @@
                 $("#overall-spinner").hide();
             });
         });
-
 
         {% if new_wallet_form.errors %}
         $("#new-wallet-modal").bPopup();

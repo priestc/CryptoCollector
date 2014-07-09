@@ -64,20 +64,29 @@ function update_overall_fiat_total() {
     // Get the totals from each wallet and add them up.
     // Stick that number into the DOM.
     var total = 0;
+    var failures_detected = false;
     $(".wallet-total-fiat").each(function(i, element) {
         var number_with_commas = $(element).html();
+        //console.log("-----", number_with_commas);
         total += Number(clean_number(number_with_commas));
     });
     var with_commas = total.toLocaleString();
     $("title").text(with_commas + " - CoinStove");
     $("#total-fiat-amount").html(with_commas);
+
+    if($('.price-fail').length) {
+        $("#failures-detected").show();
+    }
+    console.log("updated overall totals")
 }
 function update_address_balance(js_id, data) {
     // from a dict of new prices for an address, update the DOM
     // gets called after ajax call to get updated price.
     // Updates the wallet crypto value, and fiat value.
     var crypto_symbol = data['crypto_symbol'].toLowerCase();
-    var num_exchange = Number($("." + crypto_symbol + "-fiat-exchange").first().text());
+    var num = $(".wallet-" + crypto_symbol + " .fiat-exchange-rate").first().text()
+
+    var num_exchange = Number(num);
 
     var fiat_value = format_fiat(num_exchange * data.wallet_value);
     var wallet_value = numberWithCommas(data.wallet_value);
@@ -86,7 +95,6 @@ function update_address_balance(js_id, data) {
     $("#" + js_id + " .address-fiat-value").html(fiat_value);
 
     update_wallet_total(crypto_symbol);
-    update_overall_fiat_total();
 }
 
 function update_wallet_total(crypto_symbol) {
@@ -104,7 +112,10 @@ function update_wallet_total(crypto_symbol) {
     });
     wallet.find('.wallet-total-crypto').text(format_crypto(wallet_total));
 
-    var exchange_rate = clean_number($('.wallet-' + crypto_symbol).find('.fiat-exchange').text());
+    var exchange_rate = clean_number(
+        $('.wallet-' + crypto_symbol).find('.fiat-exchange-rate').first().text()
+    );
+
     var fiat_total = exchange_rate * wallet_total;
     wallet.find('.wallet-total-fiat').text(format_fiat(fiat_total));
 }
@@ -117,17 +128,15 @@ function update_wallet_exchange_rate(crypto_symbol, data) {
     var rate = data['exchange_rate'];
 
     if(rate == 0) {
-        wallet_element.find('.fiat-exchange-source').html("<span class='price-fail'>&#9888; Price service not available</span>");
-        wallet_element.find('.fiat-exchange').text(0).hide();
+        wallet_element.find('.fiat-exchange-status').html("<span class='price-fail'>&#9888; Price service not available</span>");
+        wallet_element.find('.fiat-exchange-units').hide();
+        wallet_element.find('.fiat-exchange-rate').text(0).hide();
+        wallet_element.find('.fiat-exchange-small-status').html("<span class='price-fail'>&#9888;</span>");
     } else {
         var source = '(via ' + data['price_source'] + ")";
-        var units = data['fiat_symbol'] + "/" + crypto_symbol.toUpperCase();
-        wallet_element.find('.fiat-exchange-units').text(units);
         wallet_element.find('.fiat-exchange-source').text(source);
-        wallet_element.find('.fiat-exchange').text(rate);
+        wallet_element.find('.fiat-exchange-rate').text(rate);
     }
-
-
 }
 
 function make_tx_html(transaction, cardinal, crypto_symbol) {
@@ -257,12 +266,14 @@ $(function() {
         event.stopPropagation()
         var crypto_symbol = $(this).data('crypto-symbol').toLowerCase()
         reload_currency_exchange(crypto_symbol);
+        update_overall_fiat_total();
     });
     $(".reload-address-price").click(function(event) {
         event.preventDefault();
         var js_id = $(this).data('js-id');
         var crypto_symbol = $(this).data('crypto-symbol');
         reload_address_price(js_id, true);
+        update_overall_fiat_total();
     });
 
     $(".launch-public-qr-modal").click(function(event) {

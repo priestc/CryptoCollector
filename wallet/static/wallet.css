@@ -1,12 +1,5 @@
-body {
-    font-family: 'Helvetica';
-}
-.wallet-container {
-    width: 80%;
-    max-width: 1000px;
-    min-width: 600px;
-    margin: 0 auto 0 auto;
-    padding: 10px;
+h1 {
+    margin-bottom: 5px
 }
 h1.overall_total {
     float: right;
@@ -70,7 +63,14 @@ input[name=private_key] {
 }
 .price-fail {
     color: red;
+    background: yellow;
     font-weight: bold
+}
+#failures-detected{
+    color: red;
+    display: none;
+    width: 100%;
+    text-align: right;
 }
 .addresses-container {
     display: none;

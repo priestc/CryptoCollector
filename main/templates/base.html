@@ -4,6 +4,17 @@
         <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
         <script src="/static/jquery-1.11.1.js"></script>
         <style>
+            body {
+                font-family: 'Helvetica';
+            }
+            .page-container {
+                width: 80%;
+                max-width: 1000px;
+                min-width: 600px;
+                margin: 0 auto 0 auto;
+                padding: 10px;
+                border: 0px solid black;
+            }
             #contrib-messages li {
                 margin: 1em 0;
                 padding: 1em;
@@ -40,11 +51,16 @@
 
     <div>
     {% if user.is_authenticated %}
-    Logged in as {{ user.username }}, <a href="{% url 'logout' %}">Logout</a>
+    Logged in as {{ user.username }}, <a href="{% url 'show_wallet' %}">Wallets</a>, <a href="{% url 'logout' %}">Logout</a>
+    {% else %}
+    Welcome, Guest!
+    <a href="{% url 'login' %}">Login</a>, <a href="{% url 'register' %}">Register</a>
     {% endif %}
     </div>
 
+    <div class="page-container">
     {% block content %}{% endblock %}
+    </div>
 
     </body>
 </html>
