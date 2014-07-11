@@ -21,7 +21,6 @@ def register(request):
             login(request, user)
             return HttpResponseRedirect("/wallets/")
 
-    #import debug
     return TemplateResponse(request, "register.html", {
         'form': form
     })

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <style>
+        #currency-container {
+            overflow: hidden;
+            width: 600px;
+            border: 0px solid black;
+        }
+        .currency {
+            width: 150px;
+            padding: 10px;
+            text-align: center;
+            font-size: large;
+            float: left;
+        }
+    </style>
+
+    <h1>Welcome to CoinStove!</h1>
+
+    <h2>CoinStove currently supports the following currencies:</h2>
+
+    <div id="currency-container">
+    {% for crypto_symbol, crypto_title in supported_currencies %}
+        <div class="currency">
+            <img src="/static/{{ crypto_symbol }}-logo.png" width="128" height="128"><br>
+            <span class="crypto-title">{{ crypto_title }} ({{ crypto_symbol|upper }})</span>
+        </div>
+    {% endfor %}
+    </div>
+
+{% endblock %}

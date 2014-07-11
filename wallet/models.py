@@ -152,7 +152,7 @@ class CryptoWallet(models.Model):
         """
         raise NotImplementedError()
 
-    def send_to_address(self, address, amount):
+    def send_to_address(self, address, amount, fee):
         """
         Create a transaction of passed in amount to passed in address and send
         off to the coin network. Done either through an external service
@@ -169,12 +169,18 @@ class CryptoWallet(models.Model):
 
     @classmethod
     def get_historical_price(self, date, fiat_symbol='usd'):
+        """
+        Return the price of the currency at the passed in date. Uses the
+        HistoricalCryptoPrice project to get this value (installed at the
+        domain configured on the HISTORICAL_DOMAIN setting).
+        Returned is a three item tuple: [price, exchange, date of poll]
+        """
         url = "http://%s/price_for_date?fiat=%s&crypto=%s&date=%s"
         url = url % (settings.HISTORICAL_DOMAIN, fiat_symbol, self.symbol, date.isoformat())
         response = fetch_url(url)
         print url, response.content
-        ret = response.json()
-        return [ret[0], ret[1], arrow.get(ret[2]).datetime]
+        price, exchange, date = response.json()
+        return price, exchange, arrow.get(date).datetime
 
     @classmethod
     @bypassable_cache
@@ -183,7 +189,7 @@ class CryptoWallet(models.Model):
         Make call to external price source and get the current trading price.
         Currently, all prices come from cryptocoincharts.info.
         """
-        url="http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
+        url = "http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
             cls.symbol, fiat_symbol
         )
         response = fetch_url(url).json()
