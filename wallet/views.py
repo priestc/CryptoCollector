@@ -75,7 +75,8 @@ def get_value(request):
     All requests via this way bypass cache. Data is always most fresh.
     """
     symbol, pk = request.GET['js_id'].split('-')
-    wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
+    wallet = wallet_classes[symbol].objects.filter(
+        pk=pk,
         owner__id=request.user.id
     ).get()
     j = wallet.price_json(hard_refresh=False)
@@ -91,7 +92,8 @@ def get_exchange_rate(request):
 @login_required
 def get_private_key(request):
     symbol, pk = request.GET['js_id'].split('-')
-    wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
+    wallet = wallet_classes[symbol].objects.filter(
+        pk=pk,
         owner__id=request.user.id
     ).get()
     return HttpResponse(wallet.private_key, content_type="text/plain")
@@ -99,7 +101,8 @@ def get_private_key(request):
 @login_required
 def save_private_key(request):
     symbol, pk = request.POST['js_id'].split('-')
-    wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
+    wallet = wallet_classes[symbol].objects.filter(
+        pk=pk,
         owner__id=request.user.id
     ).get()
     wallet.private_key = request.POST['private_key']
