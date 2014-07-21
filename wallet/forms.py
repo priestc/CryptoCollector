@@ -1,6 +1,6 @@
 from django import forms
 
-from wallet.models import wallet_classes
+from wallet.models import wallet_classes, SavedRecipientAddress
 
 WALLET_CHOICES = [
     # ('btc', 'BTC - Bitcoin') for each currency
@@ -36,9 +36,20 @@ class WalletForm(forms.Form):
             name=self.cleaned_data['nickname'] or "My %s" % t.upper()
         )
 
-class TransactionForm(forms.Form):
-    source_wallet = forms.CharField()
-    amount = forms.CharField()
+class SendMoneyForm(forms.Form):
+    currency = forms.CharField(widget=forms.HiddenInput)
+    amount = forms.CharField(initial=0, widget=forms.TextInput(attrs={'class': 'small-numeric'}))
+    saved_addresses_selection = forms.ModelChoiceField(queryset=SavedRecipientAddress.objects.none())
     target_address = forms.CharField()
-    target_address_label = forms.CharField()
+    save_target_address_label = forms.CharField()
     miner_fee = forms.ChoiceField(choices=FEE_CHOICES)
+
+    def execute(self):
+        Wallet = wallet_classes[self.cleaned_data['currency']]
+        target_address = self.cleaned_data['target_address']
+        target_address_label = self.cleaned_data['target_address_label']
+
+        Wallet.send_transaction(
+            amount=self.cleaned_data['amount'],
+            target=target_address
+        )

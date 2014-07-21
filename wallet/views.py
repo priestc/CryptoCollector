@@ -7,7 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from models import wallet_classes
-from forms import WalletForm
+from forms import WalletForm, SendMoneyForm
 
 class DateTimeJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -106,7 +106,7 @@ def save_private_key(request):
         owner__id=request.user.id
     ).get()
     wallet.private_key = request.POST['private_key']
-    wallet.save();
+    wallet.save()
     messages.info(request, "Private key succesfully added to <strong>%s</strong>" % wallet.name)
     return HttpResponseRedirect("/wallets/")
 
@@ -120,9 +120,10 @@ def paper_wallet(request):
     js_id = request.GET.get('js_id', None)
     if js_id:
         symbol, pk = js_id.split("-")
-        wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
+        wallet = wallet_classes[symbol].objects.get(
+            pk=pk,
             owner__id=request.user.id
-        ).get()
+        )
         wallets = [wallet]
     else:
         wallets = []
@@ -135,4 +136,25 @@ def paper_wallet(request):
 
     return TemplateResponse(request, 'paper_wallet.html', {
         'wallets': wallets,
+    })
+
+@login_required
+def send_money(request):
+    currency = request.GET.get('currency', None)
+    fiat = request.GET.get('fiat', None)
+    form = SendMoneyForm(initial={'currency': currency})
+
+    if request.POST:
+        form = SendMoneyForm(request.POST)
+        if form.is_valid():
+            form.execute()
+            return HttpResponseRedirect("/wallets/")
+
+    conversion_rate = wallet_classes[currency].get_fiat_exchange(fiat)
+
+    return TemplateResponse(request, 'send_money.html', {
+        'form': form,
+        'currency': currency,
+        'conversion_rate': conversion_rate,
+        'fiat': fiat,
     })

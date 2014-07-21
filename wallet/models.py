@@ -189,6 +189,7 @@ class CryptoWallet(models.Model):
         Make call to external price source and get the current trading price.
         Currently, all prices come from cryptocoincharts.info.
         """
+        return 354.67
         url = "http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
             cls.symbol, fiat_symbol
         )
@@ -507,3 +508,13 @@ wallet_classes = OrderedDict((
     ('ftc', FeathercoinWallet),
     ('nxt', NextWallet),
 ))
+
+class SavedRecipientAddress(models.Model):
+    """
+    Represents an address the user has send money to and wants that address
+    to stick around because they may send to it again.
+    """
+    owner = models.ForeignKey('auth.User')
+    crypto_symbol = models.CharField(max_length=8)
+    name = models.TextField()
+    address = models.CharField(max_length=64)

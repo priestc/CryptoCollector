@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<style>
+    .small-numeric {
+        width: 4em
+    }
+    .conversion-msg {
+        font-size: small
+    }
+    input[name=target_address] {
+        width: 45em;
+    }
+
+    #send-box {
+        border-radius: 10px;
+        padding: 10px;
+    }
+</style>
+
+<div id="send-box" class="colors-{{ currency }}">
+<form method="post" id="send-form">
+    <table>
+        <tr>
+            <td class="logo">
+                <img class="crypto-logo" src="/static/{{ currency }}-logo.png" width="128" height="128">
+            </td>
+            <td>
+                <h1>Send {{currency|upper }}</h1>
+
+            </td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <table>
+        <tr>
+            <th>Amount:</th>
+            <td>{{ form.amount }}{{ form.currency }}
+                {{ currency|upper }} == <input type="text" class="small-numeric" id="converted-to-fiat"> {{ fiat|upper }}
+                <span class="conversion-msg">(Using {{ conversion_rate }} {{ fiat|upper }}/{{ currency|upper }})</span>
+            </td>
+        </tr>
+        <tr>
+            <th>Target Address:</th>
+            <td>
+                {{ form.target_address }} <a href="#">Load from QR</a>
+            </td>
+        </tr>
+    </table>
+    <input type="submit" value="Send">
+</form>
+</div>
+<script>
+    var conversion_rate = {{ conversion_rate }};
+
+    function convert_to_fiat(element) {
+        var amount_crypto = Number(element.val());
+        var converted = amount_crypto * conversion_rate;
+        $("#converted-to-fiat").val(converted.toFixed(2));
+    }
+
+    function convert_from_fiat(element) {
+        var amount_fiat = Number(element.val());
+        var converted = amount_fiat / conversion_rate;
+        $("#send-form input[name=amount]").val(converted.toFixed(5));
+    }
+
+    $(function() {
+        $('body').on('keyup', "#send-form input[name=amount]", function(event) {
+            convert_to_fiat($(this))
+        });
+
+        $('body').on('keyup', "#converted-to-fiat", function(event) {
+            convert_from_fiat($(this))
+        });
+
+        convert_to_fiat($("#send-form input[name=amount]"));
+    });
+</script>
+{% endblock %}
