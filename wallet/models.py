@@ -13,22 +13,8 @@ from django.conf import settings
 from coinkit import (BitcoinKeypair, PeercoinKeypair, LitecoinKeypair,
     DogecoinKeypair,FeathercoinKeypair)
 
-def fetch_url(*args, **kwargs):
-    """
-    Wrapper for requests.get with app specific headers
-    """
-    headers = kwargs.pop('headers', None)
-    custom = {'User-Agent': "CoinStove 0.8"}
-    if headers:
-        headers.update(custom)
-        kwargs['headers'] = headers
-    else:
-        kwargs['headers'] = custom
-
-    print "making external request..."
-    ret = requests.get(*args, **kwargs)
-    print "...done"
-    return ret
+from prices import BTERPriceGetter
+from utils import fetch_url
 
 def bypassable_cache(func):
     """
@@ -189,11 +175,7 @@ class CryptoWallet(models.Model):
         Make call to external price source and get the current trading price.
         Currently, all prices come from cryptocoincharts.info.
         """
-        url = "http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
-            cls.symbol, fiat_symbol
-        )
-        response = fetch_url(url).json()
-        return float(response['price'] or 0), response['best_market']
+        return BTERPriceGetter().get_price(cls.symbol, fiat_symbol)
 
     @classmethod
     def generate_new_keypair(cls):
@@ -433,7 +415,7 @@ class VertcoinWallet(CryptoWallet):
     @bypassable_cache
     def get_value(self):
         url = "https://explorer.vertcoin.org/chain/Vertcoin/q/addressbalance/"
-        response = fetch_url(url + self.public_key)
+        response = fetch_url(url + self.public_key, verify=False)
         return float(response.content)
 
 
