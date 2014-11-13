@@ -2,6 +2,7 @@ from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('wallet.views',
     url(r'^$', 'wallets', name='show_wallet'),
+    url(r'^send_money', 'send_money', name="send_money"),
     url(r'^transactions$', 'get_transactions'),
     url(r'^value$', 'get_value'),
     url(r'^get_exchange_rate', 'get_exchange_rate'),

@@ -489,3 +489,13 @@ wallet_classes = OrderedDict((
     ('ftc', FeathercoinWallet),
     ('nxt', NextWallet),
 ))
+
+class SavedRecipientAddress(models.Model):
+    """
+    Represents an address the user has send money to and wants that address
+    to stick around because they may send to it again.
+    """
+    owner = models.ForeignKey('auth.User')
+    crypto_symbol = models.CharField(max_length=8)
+    name = models.TextField()
+    address = models.CharField(max_length=64)

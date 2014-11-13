@@ -57,7 +57,9 @@
                         <img class="crypto-logo" src="/static/{{ crypto_symbol }}-logo.png" width="128" height="128">
                     </td>
                     <td>
-                        <h2>{{ crypto_symbol|upper }} - {{ wallets.0.full_name }}</h2>
+                        <h2>{{ crypto_symbol|upper }} - {{ wallets.0.full_name }} -
+                            <a href="/wallets/send_money?currency={{ crypto_symbol }}&amp;fiat">Send</a>
+                        </h2>
 
                         <span class="fiat-exchange-status"></span>
                         <span class="fiat-exchange-rate"></span>

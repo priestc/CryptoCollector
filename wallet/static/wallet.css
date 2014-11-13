@@ -156,43 +156,6 @@ a.reload:hover {
 .transaction .Sent {
     color: red;
 }
-/* currency specific styles */
-
-.wallet-ltc {
-    background: silver;
-}
-.wallet-btc {
-    background: gold
-}
-.wallet-ftc {
-    background: cyan;
-}
-.wallet-doge {
-    background: yellow;
-}
-.wallet-ppc {
-    background: pink;
-}
-.wallet-drk {
-    background: navy;
-    color: lightgray;
-}
-.wallet-drk a {
-    color: tan;
-}
-.wallet-rdd {
-    background: #ebffcd;
-}
-
-.wallet-myr {
-    background: #d0cfff;
-}
-.wallet-vtc {
-    background: lime;
-}
-.wallet-nxt {
-    background: orange;
-}
 
 .transaction .historical-price {
     text-align: right;
