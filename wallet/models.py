@@ -452,10 +452,11 @@ class DarkcoinWallet(CryptoWallet):
     symbol = 'DRK'
     full_name = 'Darkcoin'
     tx_external_link_template = "{0}"
-    addres = 'XrbZsLp9QDSf8usYYMPhmKWA8u1kQ26rQJ'
+    address = 'XrbZsLp9QDSf8usYYMPhmKWA8u1kQ26rQJ'
 
     def get_value(self, **k):
-        return 15.0
+        url ="http://chainz.cryptoid.info/drk/api.dws?q=getbalance&a=%s" % self.address
+        return float(fetch_url(url).content)
 
 
 class ReddcoinWallet(CryptoWallet):
@@ -490,12 +491,12 @@ wallet_classes = OrderedDict((
     ('nxt', NextWallet),
 ))
 
-class SavedRecipientAddress(models.Model):
-    """
-    Represents an address the user has send money to and wants that address
-    to stick around because they may send to it again.
-    """
-    owner = models.ForeignKey('auth.User')
-    crypto_symbol = models.CharField(max_length=8)
-    name = models.TextField()
-    address = models.CharField(max_length=64)
+# class SavedRecipientAddress(models.Model):
+#     """
+#     Represents an address the user has send money to and wants that address
+#     to stick around because they may send to it again.
+#     """
+#     owner = models.ForeignKey('auth.User')
+#     crypto_symbol = models.CharField(max_length=8)
+#     name = models.TextField()
+#     address = models.CharField(max_length=64)

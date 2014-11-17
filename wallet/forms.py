@@ -1,6 +1,6 @@
 from django import forms
 
-from wallet.models import wallet_classes, SavedRecipientAddress
+from wallet.models import wallet_classes #, SavedRecipientAddress
 
 WALLET_CHOICES = [
     # ('btc', 'BTC - Bitcoin') for each currency
@@ -15,6 +15,9 @@ FEE_CHOICES = [
 ]
 
 class WalletForm(forms.Form):
+    """
+    For creating/generating new keypairs.
+    """
     private_key = forms.CharField(max_length=64, help_text="optional", required=False)
     public_key = forms.CharField(max_length=64, help_text="optional", required=False)
     type = forms.ChoiceField(choices=WALLET_CHOICES)
@@ -39,7 +42,7 @@ class WalletForm(forms.Form):
 class SendMoneyForm(forms.Form):
     currency = forms.CharField(widget=forms.HiddenInput)
     amount = forms.CharField(initial=0, widget=forms.TextInput(attrs={'class': 'small-numeric'}))
-    saved_addresses_selection = forms.ModelChoiceField(queryset=SavedRecipientAddress.objects.none())
+    #saved_addresses_selection = forms.ModelChoiceField(queryset=SavedRecipientAddress.objects.none())
     target_address = forms.CharField()
     save_target_address_label = forms.CharField()
     miner_fee = forms.ChoiceField(choices=FEE_CHOICES)

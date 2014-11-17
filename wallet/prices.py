@@ -13,10 +13,11 @@ class OldCryptoCoinChartsPriceGetter(PriceGetter):
     Using raw rest API (broken apparently)
     """
     def get_price(self, crypto_symbol, fiat_symbol):
-        url = "http://www.cryptocoincharts.info/v2/api/tradingPair/%s_%s" % (
-            cls.symbol, fiat_symbol
+        url = "http://api.cryptocoincharts.info/tradingPairs/%s_%s" % (
+            crypto_symbol, fiat_symbol
         )
         response = fetch_url(url).json()
+        print response
         return float(response['price'] or 0), response['best_market']
 
 class CryptoCoinChartsPriceGetter(PriceGetter):
