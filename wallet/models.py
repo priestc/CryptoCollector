@@ -13,7 +13,7 @@ from django.conf import settings
 from coinkit import (BitcoinKeypair, PeercoinKeypair, LitecoinKeypair,
     DogecoinKeypair,FeathercoinKeypair)
 
-from prices import BTERPriceGetter
+from prices import BTERPriceGetter, CryptonatorPriceGetter
 from utils import fetch_url
 
 def bypassable_cache(func):
@@ -173,9 +173,14 @@ class CryptoWallet(models.Model):
     def get_fiat_exchange(cls, fiat_symbol='usd'):
         """
         Make call to external price source and get the current trading price.
-        Currently, all prices come from cryptocoincharts.info.
         """
-        return BTERPriceGetter().get_price(cls.symbol, fiat_symbol)
+        for Getter in [CryptonatorPriceGetter, BTERPriceGetter]:
+            try:
+                return Getter().get_price(cls.symbol, fiat_symbol)
+            except:
+                pass
+
+        raise Exception("Can't get price for %s to %s" % (cls.symbol, fiat_symbol))
 
     @classmethod
     def generate_new_keypair(cls):

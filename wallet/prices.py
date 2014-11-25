@@ -32,49 +32,34 @@ class CryptoCoinChartsPriceGetter(PriceGetter):
 class BTERPriceGetter(PriceGetter):
     def get_price(self, crypto_symbol, fiat_symbol):
         pair = ("%s_%s" % (crypto_symbol, fiat_symbol)).lower()
-
-        if pair == 'ppc_usd':
-            # since bter doesn't support usd_ppc,we need to make 2 calls and
-            # do the math ourselvs. Th extra http request isn't a problem because
-            # of caching that happens upstream
-            url = "http://data.bter.com/api/1/ticker/ppc_btc"
-            response = fetch_url(url).json()
-            ppc_btc = float(response['last'] or 0)
-
-            url = "http://data.bter.com/api/1/ticker/btc_usd"
-            response = fetch_url(url).json()
-            btc_usd = float(response['last'] or 0)
-
-            return btc_usd * ppc_btc, 'bter'
-
-        if pair == 'vtc_usd':
-            # since bter doesn't support usd_vtc, we need to make 2 calls and
-            # do the math ourselvs. Th extra http request isn't a problem because
-            # of caching that happens upstream
-            url = "http://data.bter.com/api/1/ticker/vtc_btc"
-            response = fetch_url(url).json()
-            vtc_btc = float(response['last'] or 0)
-
-            url = "http://data.bter.com/api/1/ticker/btc_usd"
-            response = fetch_url(url).json()
-            btc_usd = float(response['last'] or 0)
-
-            return btc_usd * vtc_btc, 'bter'
-
-        if pair == 'ftc_usd':
-            # since bter doesn't support usd_ftc, we need to make 2 calls and
-            # do the math ourselvs. Th extra http request isn't a problem because
-            # of caching that happens upstream
-            url = "http://data.bter.com/api/1/ticker/ftc_btc"
-            response = fetch_url(url).json()
-            ftc_btc = float(response['last'] or 0)
-
-            url = "http://data.bter.com/api/1/ticker/btc_usd"
-            response = fetch_url(url).json()
-            btc_usd = float(response['last'] or 0)
-
-            return btc_usd * ftc_btc, 'bter'
-
         url = "http://data.bter.com/api/1/ticker/%s" % pair
+
         response = fetch_url(url).json()
+        print response
+
+        if response['result'] == 'false': # bter api returns this as string
+            # bter doesn't support this pair, we need to make 2 calls and
+            # do the math ourselves. The extra http request isn't a problem because
+            # of caching that happens upstream. BTER only has USD, BTC and CNY
+            # markets, so any other fiat will likely fail.
+
+            url = "http://data.bter.com/api/1/ticker/%s_btc" % crypto_symbol
+            response = fetch_url(url).json()
+            altcoin_btc = float(response['last'] or 0)
+
+            url = "http://data.bter.com/api/1/ticker/btc_%s" % fiat_symbol
+            response = fetch_url(url).json()
+            print response
+            btc_fiat = float(response['last'] or 0)
+
+            return btc_fiat * altcoin_btc, 'bter (calculated)'
+
         return float(response['last'] or 0), 'bter'
+
+
+class CryptonatorPriceGetter(PriceGetter):
+    def get_price(self, crypto_symbol, fiat_symbol):
+        pair = ("%s-%s" % (crypto_symbol, fiat_symbol)).lower()
+        url = "https://www.cryptonator.com/api/ticker/%s" % pair
+        response = fetch_url(url).json()
+        return float(response['ticker']['price']), 'cryptonator'
