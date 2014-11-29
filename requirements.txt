@@ -1,4 +1,4 @@
 Django==1.6.5
 coinkit==0.4.1
 requests==2.3.0
-CryptoCoinChartsApi
+moneywagon
