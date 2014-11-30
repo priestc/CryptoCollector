@@ -1,5 +1,5 @@
 """
-Django settings for CoinStove project.
+Django settings for CoinCollector project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -51,9 +51,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'CoinStove.urls'
+ROOT_URLCONF = 'CoinCollector.urls'
 
-WSGI_APPLICATION = 'CoinStove.wsgi.application'
+WSGI_APPLICATION = 'CoinCollector.wsgi.application'
 
 
 # Database

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User, AbstractBaseUser
 
-class CoinStoveUser(AbstractBaseUser):
+class CoinCollectorUser(AbstractBaseUser):
     pass
 
 class RegistrationForm(forms.Form):

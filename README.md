@@ -1,4 +1,4 @@
-CoinStove
+CoinCollector
 =========
 
 cryptocurrency web wallet
@@ -21,7 +21,7 @@ More to come in the future.
 Abilities
 =========
 
-CoinStove is still very young. At this time, you can...
+CoinCollector is still very young. At this time, you can...
 
 * Watch the *TC/USD value of an existing address, (i.e. 'watch only addresses')
 * Watch the current exchange rate of each supported currency
@@ -35,8 +35,8 @@ Make sure python 2.7 is installed. Make sure Pip is installed.
 
 Open up the console. Enter the following commands:
 
-    git clone https://github.com/priestc/CoinStove.git
-    cd CoinStove
+    git clone https://github.com/priestc/CoinCollector.git
+    cd CoinCollector
     pip install -r requirements.txt
     python manage.py syncdb
     python runserver

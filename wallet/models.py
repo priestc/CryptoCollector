@@ -51,7 +51,7 @@ class Transaction(object):
         transaction.
         """
         if not getter:
-            getter = HistoricalCryptoPrice(useragent='CoinStove 1.0')
+            getter = HistoricalCryptoPrice(useragent='CoinCollector 1.0')
         return getter.get_historical(fiat=fiat, crypto=self.crypto)
 
 
