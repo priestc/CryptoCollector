@@ -71,7 +71,7 @@ function update_overall_fiat_total() {
         total += Number(clean_number(number_with_commas));
     });
     var with_commas = total.toLocaleString();
-    $("title").text(with_commas + " - CoinCollector");
+    $("title").text(with_commas + " - CryptoCollector");
     $("#total-fiat-amount").html(with_commas);
 
     if($('.price-fail').length) {

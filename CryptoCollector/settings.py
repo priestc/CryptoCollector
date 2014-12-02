@@ -1,5 +1,5 @@
 """
-Django settings for CoinCollector project.
+Django settings for CryptoCollector project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -51,9 +51,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'CoinCollector.urls'
+ROOT_URLCONF = 'CryptoCollector.urls'
 
-WSGI_APPLICATION = 'CoinCollector.wsgi.application'
+WSGI_APPLICATION = 'CryptoCollector.wsgi.application'
 
 
 # Database

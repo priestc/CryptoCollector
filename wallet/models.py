@@ -9,11 +9,13 @@ from django.db import models
 from django.core.cache import cache
 from django.conf import settings
 
-from coinkit import (BitcoinKeypair, PeercoinKeypair, LitecoinKeypair,
-    DogecoinKeypair,FeathercoinKeypair)
-
-from moneywagon import CurrentPrice, HistoricalPrice
-from utils import fetch_url
+from coinkit import (
+    BitcoinKeypair, PeercoinKeypair, LitecoinKeypair, DogecoinKeypair,
+    FeathercoinKeypair
+)
+from moneywagon import (
+    CurrentPrice, HistoricalPrice, HistoricalTransactions, AddressBalance
+)
 
 class KeyPair(models.Model):
     """
@@ -28,8 +30,55 @@ class KeyPair(models.Model):
     private_key_type = models.TextField()
 
     def __unicode__(self):
-        return "%s - %s (%s)" % (self.owner.username, self.public_key, self.private_key_type)
+        return "%s - %s (%s %s)" % (
+            self.owner.username, self.public_key, self.crypto, self.private_key_type
+        )
 
+    def get_balance(self, getter=None):
+        return (getter or AddressBalance()).get_price(self.crypto, self.address)
+
+    def get_transactions(self, fiat=None, getter=None):
+        """
+        Fetch historical transactions from this address from an external block chain
+        service (blockr.io or bitpay insight or whereever). All external api
+        heavy lifting is done by the moneywagon module.
+
+        The returned structore looks like this:
+
+        {'amount': 147.58363366,
+        'confirmations': 9093,
+        'date': datetime.datetime(2014, 11, 16, 23, 53, 37, tzinfo=tzutc()),
+        'txid': u'cb317dec84514773f34e4258cd0ff49eed6bfcf1770709b1ed07855d2e1a4aa4'}
+
+        If `fiat` is passed in as an argument, an extra key is added. The vaue of
+        that key is a lambda expression that when called evaluates to the fiat price
+        at the time of transaction::
+
+        returned = {'amount': 147.58363366,
+        'confirmations': 9093,
+        'historical_price': <function object>,
+        'date': datetime.datetime(2014, 11, 16, 23, 53, 37, tzinfo=tzutc()),
+        'txid': u'cb317dec84514773f34e4258cd0ff49eed6bfcf1770709b1ed07855d2e1a4aa4'}
+
+        Then you call the function that has been returned:
+
+        >>> returned['historical_price']()
+        (3.2636992,
+        'CRYPTOCHART/VTC x BITCOIN/BTCERUR',
+        datetime.datetime(2014, 11, 13, 0, 0))
+        """
+        from_ext = (getter or HistoricalTransactions()).get_transactions(self.crypto, self.address)
+
+        if fiat:
+            hgetter = HistoricalPrice()
+            for tx in from_ext
+                def get_historical_price(fiat):
+                    return hgetter.get_historical(
+                        self.crypto, self.fiat, tx['date']
+                    )
+                tx['historical_price'] = get_historical_price
+
+        return from_ext
 
 class Transaction(object):
     """
@@ -50,154 +99,15 @@ class Transaction(object):
         Using the local cache, get the fiat price at the time of
         transaction.
         """
-        if not getter:
-            getter = HistoricalCryptoPrice(useragent='CoinCollector 1.0')
-        return getter.get_historical(fiat=fiat, crypto=self.crypto)
+        return
 
-
-class BitcoinWallet(CryptoWallet):
-    symbol = 'BTC'
-    full_name = 'Bitcoin'
-    tx_external_link_template = "http://blockchain.info/tx/{0}"
-
-    @classmethod
-    def generate_new_keypair(cls):
-        keypair = BitcoinKeypair()
-        return keypair.address(), keypair.private_key()
-
-    def send_to_address(self, address, amount):
-        """
-        Make call to bitcoind through rpc.
-        """
-        raise NotImplementedError()
-
-
-class LitecoinWallet(CryptoWallet):
-    symbol = "LTC"
-    full_name = 'Litecoin'
-    tx_external_link_template = "http://explorer.litecoin.net/tx/{0}"
-
-
-    def send_to_address(self, address, amount):
-        raise NotImplementedError()
-
-    @classmethod
-    def generate_new_keypair(cls):
-        keypair = LitecoinKeypair()
-        return keypair.address(), keypair.private_key()
-
-class DogecoinWallet(CryptoWallet):
-    symbol = "DOGE"
-    full_name = 'Dogecoin'
-    tx_external_link_template = 'http://dogechain.info/tx/{0}'
-
-    def send_to_address(self, address, amount):
-        raise NotImplementedError()
-
-    @classmethod
-    def generate_new_keypair(cls):
-        keypair = DogecoinKeypair()
-        return keypair.address(), keypair.private_key()
-
-
-class PeercoinWallet(CryptoWallet):
-    symbol = "PPC"
-    full_name = 'Peercoin'
-    tx_external_link_template = "http://bkchain.org/ppc/tx/{0}"
-
-    def send_to_address(self, address, amount):
-        raise NotImplementedError()
-
-    @classmethod
-    def generate_new_keypair(cls):
-        keypair = PeercoinKeypair()
-        return keypair.address(), keypair.private_key()
-
-
-class FeathercoinWallet(CryptoWallet):
-    symbol = 'FTC'
-    full_name = 'Feathercoin'
-    tx_external_link_template = "http://explorer.feathercoin.com/tx/{0}"
-
-    @classmethod
-    def generate_new_keypair(cls):
-        keypair = FeathercoinKeypair()
-        return keypair.address(), keypair.private_key()
-
-
-class VertcoinWallet(CryptoWallet):
-    symbol = 'VTC'
-    full_name = 'Vertcoin'
-    tx_external_link_template = "http://explorer.obi.vg/tx/{0}"
-
-
-class NextWallet(CryptoWallet):
-    symbol = 'NXT'
-    full_name = 'Next'
-    tx_external_link_template = "http://nxtexplorer.com/nxt/nxt.cgi?action=2000&tra={0}"
-
-    
-
-    def get_transactions(self):
-        raise NotImplementedError()
-        url = 'http://nxtportal.org/transactions/account/%s?num=50' % self.public_key
-        response = fetch_url(url)
-        import debug
-        txs = response.json()
-
-        transactions = []
-        for tx in txs:
-            t = Transaction()
-            t.date = arrow.get(tx['time_utc']).datetime
-            t.amount = tx['amount']
-            t.crypto_symbol = 'ppc'
-            t.txid = tx['tx']
-            t.confirmations = tx['confirmations']
-            transactions.append(t)
-        return transactions
-
-class DarkcoinWallet(CryptoWallet):
-    symbol = 'DRK'
-    full_name = 'Darkcoin'
-    tx_external_link_template = "{0}"
-    address = 'XrbZsLp9QDSf8usYYMPhmKWA8u1kQ26rQJ'
-
-    def get_value(self, **k):
-        url ="http://chainz.cryptoid.info/drk/api.dws?q=getbalance&a=%s" % self.address
-        return float(fetch_url(url).content)
-
-
-class ReddcoinWallet(CryptoWallet):
-    symbol = 'RDD'
-    full_name = 'Reddcoin'
-    tx_external_link_template = "{0}"
-    addres = 'RbHsU84Eo5tUBj7HDNEb9ZSw2fFhU1NKgD'
-
-    def get_value(self, **k):
-        return 1000000
-
-
-class MyriadcoinWallet(CryptoWallet):
-    symbol = 'MYR'
-    full_name = 'Myriadcoin'
-    tx_external_link_template = "{0}"
-    address = 'MHEipvGqerT3XDp2hq62xtnCujS4qL67DZ'
-
-    def get_value(self, **kwargs):
-        return 100000
-
-wallet_classes = OrderedDict((
-    ('btc', BitcoinWallet),
-    ('ltc', LitecoinWallet),
-    ('doge', DogecoinWallet),
-    ('ppc', PeercoinWallet),
-    ('drk', DarkcoinWallet),
-    ('rdd', ReddcoinWallet),
-    ('vtc', VertcoinWallet),
-    ('myr', MyriadcoinWallet),
-    ('ftc', FeathercoinWallet),
-    ('nxt', NextWallet),
-))
+btc_external_link_template = "http://blockchain.info/tx/{0}"
+ltc_external_link_template = "http://explorer.litecoin.net/tx/{0}"
+doge_external_link_template = "http://dogechain.info/tx/{0}"
+ppc_external_link_template = "http://bkchain.org/ppc/tx/{0}"
+ftc_external_link_template = "http://explorer.feathercoin.com/tx/{0}"
+vtc_external_link_template = "http://explorer.obi.vg/tx/{0}"
+nxt_external_link_template = "http://nxtexplorer.com/nxt/nxt.cgi?action=2000&tra={0}"
 
 # class SavedRecipientAddress(models.Model):
 #     """
