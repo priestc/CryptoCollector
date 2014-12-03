@@ -17,6 +17,8 @@ from moneywagon import (
     CurrentPrice, HistoricalPrice, HistoricalTransactions, AddressBalance
 )
 
+from moneywagon.service import NoData
+
 class KeyPair(models.Model):
     """
     Base methods for all types of cryptocurrency wallets
@@ -25,19 +27,19 @@ class KeyPair(models.Model):
     owner = models.ForeignKey('auth.User')
     date_created = models.DateTimeField(default=datetime.datetime.now)
     nickname = models.TextField(max_length=64, blank=True)
-    public_key = models.TextField()
+    address = models.TextField()
     private_key = models.TextField(null=True, blank=True)
     private_key_type = models.TextField()
 
     def __unicode__(self):
         return "%s - %s (%s %s)" % (
-            self.owner.username, self.public_key, self.crypto, self.private_key_type
+            self.owner.username, self.address, self.crypto, self.private_key_type
         )
 
     def get_balance(self, getter=None):
-        return (getter or AddressBalance()).get_price(self.crypto, self.address)
+        return (getter or AddressBalance()).get_balance(self.crypto, self.address)
 
-    def get_transactions(self, fiat=None, getter=None):
+    def get_transactions(self, getter=None, verbose=False):
         """
         Fetch historical transactions from this address from an external block chain
         service (blockr.io or bitpay insight or whereever). All external api
@@ -67,39 +69,46 @@ class KeyPair(models.Model):
         'CRYPTOCHART/VTC x BITCOIN/BTCERUR',
         datetime.datetime(2014, 11, 13, 0, 0))
         """
-        from_ext = (getter or HistoricalTransactions()).get_transactions(self.crypto, self.address)
+        getter = (getter or HistoricalTransactions(verbose=verbose))
+        return Transaction.from_moneywagon(
+            self.crypto,
+            response=getter.get_transactions(self.crypto, self.address),
+            historical_price_service=HistoricalPrice(verbose=verbose)
+        )
 
-        if fiat:
-            hgetter = HistoricalPrice()
-            for tx in from_ext
-                def get_historical_price(fiat):
-                    return hgetter.get_historical(
-                        self.crypto, self.fiat, tx['date']
-                    )
-                tx['historical_price'] = get_historical_price
-
-        return from_ext
 
 class Transaction(object):
-    """
-    Like a model class, but not a django model because transactions are
-    always sourced from external data sources (never in local db). All
-    cryptocurrencies will use this class for displaying/dealing wth transactions.
-    """
-    crypto_symbol = '' #  btc, ltc, doge, etc.
-    cardinal = 0 # first, second, third transaction for an address... expressed as int
-    txid = '' # long hash that this tx is indexed by in the blockchain
-    amount = 0.0 # positive float for recieved transaction, negative for send
-    other_address = '' # either the sender or the recipient's public key/address
-    confirmations = ''
-    date = '' # date of transaction (a datetime instance)
+    @classmethod
+    def from_moneywagon(cls, crypto, response, historical_price_service=None):
+        return [
+            cls(crypto=crypto, historical_price_service=historical_price_service, **tx) for tx in response
+        ]
 
-    def historical_price(self, fiat, getter=None):
+    def __init__(self, txdata, historical_price_service=None):
+        self.txdata = txdata
+        self.hps = historical_price_service or HistoricalPrice()
+
+    def corrected(self, fiat):
         """
-        Using the local cache, get the fiat price at the time of
-        transaction.
+        Get the amount of money transacted converted to fiat using the conversion
+        rate at the time of transaction. All external calls to get the conversion
+        rate are handled by the moneywagon module.
         """
-        return
+        try:
+            exchange, source, sample_date = self.hps.get_historical(
+                self.txdata['crypto'], self.txdata['fiat'], self.txdata['date']
+            )
+            fiat_amount = exchange * self.amount
+        except NoData:
+            fiat_amount = "??"
+
+        l = locals()
+        del l['self']
+        return l
+
+    def __repr__(self):
+        polarity = '+' if self.amount > 0 else '-'
+        return "<TX: {} {:%Y-%m-%d} {}{}>".format(self.crypto, self.date, polarity, self.amount)
 
 btc_external_link_template = "http://blockchain.info/tx/{0}"
 ltc_external_link_template = "http://explorer.litecoin.net/tx/{0}"

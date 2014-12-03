@@ -2,15 +2,19 @@ import json
 import datetime
 from collections import OrderedDict
 
+from moneywagon import get_current_price
+
 from django.template.response import TemplateResponse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from models import wallet_classes
 from forms import WalletForm, SendMoneyForm
+from models import Transaction, KeyPair
 
-class DateTimeJSONEncoder(json.JSONEncoder):
+class TransactionJSONEncoder(json.JSONEncoder):
     def default(self, obj):
+        if isinstance(obj, Transaction):
+            return super(DateTimeJSONEncoder, self).default(obj.txdata)
         if isinstance(obj, (datetime.date, datetime.datetime)):
             return obj.isoformat()
         else:
@@ -32,17 +36,11 @@ def wallets(request):
                 messages.error(request, "Can't create wallets of type %s yet" % curr)
             return HttpResponseRedirect("/wallets/")
 
-    wallets = OrderedDict()
-    no_wallets = True
-    for symbol, Wallet in wallet_classes.items():
-        wals = list(Wallet.objects.filter(owner__id=request.user.id))
-        wallets[symbol] = wals
-        if len(wals) >= 1:
-            no_wallets = False
+    keypairs = KeyPair.objects.filter(owner__id=request.user.id)
 
     return TemplateResponse(request, 'wallet.html', {
-        'wallets_for_all_currencies': wallets,
-        'no_wallets': no_wallets,
+        'keypairs': keypairs,
+        'no_wallets': keypairs.exists(),
         'new_wallet_form': form,
     })
 
@@ -52,21 +50,11 @@ def get_transactions(request):
     API call for getting transactions for a wallet.
     Called by front end browser ajax, returns JSON.
     """
-    symbol, pk = request.GET['js_id'].split('-')
-    fiat_symbol = request.GET.get('fiat', 'usd')
-    wallet = wallet_classes[symbol].objects.filter(pk=pk).filter(
-        owner__id=request.user.id
-    ).get()
-    transactions = wallet.get_transactions()
-    j = [{
-            'txid': tx.txid,
-            'historical_price': tx.historical_price(fiat_symbol),
-            'fiat_symbol': fiat_symbol,
-            'amount': tx.amount,
-            'date': tx.date,
-        } for tx in transactions
-    ]
-    return HttpResponse(json.dumps(j, cls=DateTimeJSONEncoder), content_type="application/json")
+    address = request.GET['address']
+    fiat = request.GET.get('fiat', 'usd')
+    keypair = KeyPair.objects.get(pk=pk, owner__id=request.user.id)
+    transactions = keypair.get_transactions()
+    return HttpResponse(json.dumps(j, cls=TransactionJSONEncoder), content_type="application/json")
 
 @login_required
 def get_value(request):
@@ -74,29 +62,22 @@ def get_value(request):
     API call for getting the most recent price for a wallet.
     All requests via this way bypass cache. Data is always most fresh.
     """
-    symbol, pk = request.GET['js_id'].split('-')
-    wallet = wallet_classes[symbol].objects.filter(
-        pk=pk,
-        owner__id=request.user.id
-    ).get()
+    address = request.GET['address']
+    keypair = KeyPair.objects.get(pk=pk, owner__id=request.user.id)
+
     j = wallet.price_json(hard_refresh=False)
     return HttpResponse(j, content_type="application/json")
 
 def get_exchange_rate(request):
-    crypto_symbol = request.GET['crypto']
-    fiat_symbol = request.GET['fiat']
-    Wallet = wallet_classes[crypto_symbol.lower()]
-    j = Wallet.exchange_rate_json(hard_refresh=False, fiat_symbol=fiat_symbol)
-    return HttpResponse(j, content_type="application/json")
+    crypto = request.GET['crypto']
+    fiat = request.GET['fiat']
+    return HttpResponse(get_current_price(crypto, fiat), content_type="application/json")
 
 @login_required
 def get_private_key(request):
-    symbol, pk = request.GET['js_id'].split('-')
-    wallet = wallet_classes[symbol].objects.filter(
-        pk=pk,
-        owner__id=request.user.id
-    ).get()
-    return HttpResponse(wallet.private_key, content_type="text/plain")
+    address = request.GET['address']
+    keypair = KeyPair.objects.get(pk=pk, owner__id=request.user.id)
+    return HttpResponse(keypair.private_key, content_type="text/plain")
 
 @login_required
 def save_private_key(request):
