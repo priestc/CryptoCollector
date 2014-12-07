@@ -17,7 +17,7 @@ from moneywagon import (
     CurrentPrice, HistoricalPrice, HistoricalTransactions, AddressBalance
 )
 
-from moneywagon.service import NoData
+from moneywagon.core import NoData
 
 class KeyPair(models.Model):
     """
@@ -69,10 +69,10 @@ class KeyPair(models.Model):
         'CRYPTOCHART/VTC x BITCOIN/BTCERUR',
         datetime.datetime(2014, 11, 13, 0, 0))
         """
-        getter = (getter or HistoricalTransactions(verbose=verbose))
+        txgetter = (getter or HistoricalTransactions(verbose=verbose))
         return Transaction.from_moneywagon(
             self.crypto,
-            response=getter.get_transactions(self.crypto, self.address),
+            response=txgetter.get(self.crypto, self.address),
             historical_price_service=HistoricalPrice(verbose=verbose)
         )
 
@@ -95,7 +95,7 @@ class Transaction(object):
         rate are handled by the moneywagon module.
         """
         try:
-            exchange, source, sample_date = self.hps.get_historical(
+            exchange, source, sample_date = self.hps.get(
                 self.txdata['crypto'], self.txdata['fiat'], self.txdata['date']
             )
             fiat_amount = exchange * self.amount
@@ -107,7 +107,7 @@ class Transaction(object):
         return l
 
     def __repr__(self):
-        polarity = '+' if self.amount > 0 else '-'
+        polarity = '+' if self.amount > 0 else ''
         return "<TX: {} {:%Y-%m-%d} {}{}>".format(self.crypto, self.date, polarity, self.amount)
 
 btc_external_link_template = "http://blockchain.info/tx/{0}"

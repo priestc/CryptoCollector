@@ -48,27 +48,26 @@
     <h2 class="no-wallets">No wallets yet, add a wallet from the button above.</h2>
     {% endif %}
 
-    {% for crypto_symbol, wallets in wallets_for_all_currencies.items %}
-        {% if wallets %}
-        <div class="wallet wallet-{{ crypto_symbol }}">
+    {% for keypair in keypairs %}
+        <div class="wallet keypair-{{ keypair.id }}">
             <table class="wallet-top-section">
                 <tr>
                     <td class="logo">
-                        <img class="crypto-logo" src="/static/{{ crypto_symbol }}-logo.png" width="128" height="128">
+                        <img class="crypto-logo" src="/static/{{ keypair.crypto }}-logo.png" width="128" height="128">
                     </td>
                     <td>
-                        <h2>{{ crypto_symbol|upper }} - {{ wallets.0.full_name }} -
-                            <a href="/wallets/send_money?currency={{ crypto_symbol }}&amp;fiat">Send</a>
+                        <h2>{{ keypair.crypto|upper }} - {{ wallets.0.full_name }} -
+                            <a href="/wallets/send_money?currency={{ keypair.crypto }}&amp;fiat">Send</a>
                         </h2>
 
                         <span class="fiat-exchange-status"></span>
                         <span class="fiat-exchange-rate"></span>
                         <span class="fiat-exchange-units">
-                            <span class="fiat-symbol"></span>/{{ crypto_symbol|upper }}
+                            <span class="fiat-symbol"></span>/{{ keypair.crypto|upper }}
                         </span>
                         <span class="fiat-exchange-source"></span>
 
-                        <a href="#" class="reload reload-currency-exchange" data-crypto-symbol="{{ crypto_symbol }}">&#x21bb;</a>
+                        <a href="#" class="reload reload-currency-exchange" data-crypto-symbol="{{ keypair.crypto }}">&#x21bb;</a>
                         <img class="spinner exchange-rate-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <br>
                         {{ wallets|length }} Address{{ wallets|length|pluralize:"es" }}
@@ -76,7 +75,7 @@
                         <span class="hide-addresses">(click to hide)</span>
                     </td>
                     <td class="wallet-totals">
-                        <span class="wallet-total-crypto"></span> {{ crypto_symbol|upper }}<br>
+                        <span class="wallet-total-crypto"></span> {{ keypair.crypto|upper }}<br>
                         <span class="wallet-total-fiat"></span> <span class='fiat-symbol'></span>
                     </td>
                 </tr>
@@ -84,37 +83,37 @@
             <div class="addresses-container">
             {% for wallet in wallets %}
             <hr>
-            <table class="wallet-address-details" id="{{ wallet.js_id }}">
+            <table class="wallet-address-details" id="{{ keypair.id }}">
                 <tr>
                     <th>Name:</th>
                     <td>
-                    {% if wallet.name %}
-                    {{ wallet.name }}
+                    {% if keypair.name %}
+                    {{ keypair.name }}
                     {% else %}
-                    My {{ wallet.symbol }}
+                    My {{ keypair.crypto }}
                     {% endif %}
                     </td>
                 </tr>
                 <tr>
                     <th>Address:</th>
                     <td>
-                        <span class="public-key">{{ wallet.public_key }}</span>
+                        <span class="public-key">{{ keypair.address }}</span>
                         <div class="public-key-qr-modal modal">
-                            <div class='modal-title'>{{ wallet.name }} Public key QR code</div>
+                            <div class='modal-title'>{{ keypair.name }} Public key QR code</div>
                             <div class="modal-contents"></div>
                             <div class="modal-bottom-section">
-                                {{ wallet.public_key }}
+                                {{ keypair.public_key }}
                             </div>
                         </div>
-                        <a class="launch-public-qr-modal" data-public-key="{{ wallet.public_key }}" href="#">QR</a>
+                        <a class="launch-public-qr-modal" data-public-key="{{ keypair.address }}" href="#">QR</a>
                     </td>
                 </tr>
                 <tr>
                     <th>Private Key:</th>
                     <td>
-                        {% if wallet.has_private_key %}
+                        {% if keypair.has_private_key %}
                             <div class="public-key-qr-modal modal">
-                                <div class='modal-title'>{{ wallet.name }} Public key QR code</div>
+                                <div class='modal-title'>{{ keypair.name }} Public key QR code</div>
                                 <div class="modal-top-section">
                                     Be careful! Anyone who has access to this information
                                     can withdraw money from this address.
@@ -122,11 +121,11 @@
                                 <div class="modal-contents"></div>
                                 <div class="modal-bottom-section"></div>
                             </div>
-                            <a href="#" class="launch-private-qr-modal" data-js-id="{{ wallet.js_id }}">click to show</a>
+                            <a href="#" class="launch-private-qr-modal" data-keypair-id="{{ keypair.id }}">click to show</a>
                         {% else %}
                             <strong>[Not Found]</strong>
                             <div class="import-public-key-modal modal">
-                                <div class='modal-title'>{{ wallet.name }} Public key import</div>
+                                <div class='modal-title'>{{ keypair.name }} Public key import</div>
                                 <div class="modal-top-section">
                                     Enter the public key for this wallet. A public key should
                                     look like a long stream of random character. It should be
@@ -140,12 +139,12 @@
                                     <form method="post" action="/wallets/save_private_key">
                                         {% csrf_token %}
                                         <input type="text" name="private_key">
-                                        <input type="hidden" name="js_id" value="{{ wallet.js_id }}">
+                                        <input type="hidden" name="keypair_id" value="{{ keypair.id }}">
                                         <input type="submit" name="submit-private-key">
                                     </form>
                                 </div>
                             </div>
-                            <button class="launch-import-private-key-modal" data-js-id="{{ wallet.js_id }}">Import Private Key</button>
+                            <button class="launch-import-private-key-modal" data-keypair-id="{{ keypair.id }}">Import Private Key</button>
                         {% endif %}
                     </td>
                 </tr>
@@ -153,16 +152,16 @@
                     <th>Balance:</th>
                     <td class="balance">
                         <span class="address-value">{# gets filled in at the bottom in js #}</span>
-                        <span>{{ wallet.symbol }} &times;</span>
+                        <span>{{ keypair.crypto }} &times;</span>
                         <span class="fiat-exchange-rate">
                         {# gets filled in at the bottom in js #}
                         </span>
                         <span class="fiat-exchange-small-status"></span>
-                        <span>{{ crypto_symbol|upper }} / </span><span class="fiat-symbol"></span>
+                        <span>{{ keypair.crypto|upper }} / </span><span class="fiat-symbol"></span>
                         <span>=</span>
                         <span class="address-fiat-value">{# gets filled in at the bottom in js #}</span>
                         <span class="fiat-symbol"></span>
-                        <a href="#" class="reload reload-address-price" data-crypto-symbol="{{ crypto_symbol }}" data-js-id="{{ wallet.js_id }}">&#x21bb;</a>
+                        <a href="#" class="reload reload-address-price" data-crypto-symbol="{{ keypair.crypto }}" data-keypair-id="{{ keypair.id }}">&#x21bb;</a>
                         <img class="spinner price-spinner" src="/static/spinner16.gif" height="16" width="16">
                         <span class="error"></span>
                     </td>
@@ -199,7 +198,6 @@
             {% endfor %}
             </div>
         </div>
-        {% endif %}
     {% endfor %}
     </div>
 </div>
@@ -247,20 +245,18 @@
         var address_ajaxes = [];
         $("#overall-spinner").show();
         // Done this way so that all number formatting goes through one place.
-        {% for crypto_symbol, addresses in wallets_for_all_currencies.items %}
-            {% for address in addresses %}
-                {% if forloop.first %}
-                tx_external_link_templates["{{ crypto_symbol }}"] = "{{ address.tx_external_link_template }}";
-                price_ajaxes.push(reload_currency_exchange("{{ crypto_symbol }}").complete(function() {
-                {% endif %}
+        {% for keypair in keypairs %}
+            {% if forloop.first %}
+            tx_external_link_templates["{{ keypair.crypto }}"] = "{{ address.tx_external_link_template }}";
+            price_ajaxes.push(reload_currency_exchange("{{ crypto_symbol }}").complete(function() {
+            {% endif %}
 
-                address_ajaxes.push(reload_address_price('{{ address.js_id }}', false));
+            address_ajaxes.push(reload_address_price('{{ keypair.id }}', false));
 
-                {% if forloop.last %}
-                }));
-                update_wallet_total("{{ crypto_symbol }}");
-                {% endif %}
-            {% endfor %}
+            {% if forloop.last %}
+            }));
+            update_wallet_total("{{ crypto_symbol }}");
+            {% endif %}
         {% endfor %}
 
         $.when.apply(window, price_ajaxes).then(function() {

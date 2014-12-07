@@ -38,8 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'django_extensions',
-    'main',
-    'wallet',
+    'CryptoCollector',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -93,4 +92,4 @@ CACHES = {
     }
 }
 
-HISTORICAL_DOMAIN = 'coinsentry.pw'
+SUPPORTED_CRYPTOS = ['btc', 'ltc', 'ppc', 'doge', 'rdd', 'vtc', 'nxt', 'drk', 'ftc', 'myr']

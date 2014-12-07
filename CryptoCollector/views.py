@@ -3,13 +3,40 @@ import datetime
 from collections import OrderedDict
 
 from moneywagon import get_current_price
+from moneywagon.crypto_data import crypto_data as DATA
 
 from django.template.response import TemplateResponse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from forms import WalletForm, SendMoneyForm
-from models import Transaction, KeyPair
+from django.conf import settings
+
+from .forms import WalletForm, SendMoneyForm, RegistrationForm
+from .models import Transaction, KeyPair
+
+
+def home(request):
+    return TemplateResponse(request, "home.html", {
+        'supported_currencies': [
+            (crypto, DATA[crypto][0]) for crypto in settings.SUPPORTED_CRYPTOS
+        ]
+    })
+
+def register(request):
+    form = RegistrationForm()
+    if request.POST:
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            username, password = form.save()
+            user = authenticate(username=username, password=password)
+            login(request, user)
+            return HttpResponseRedirect("/wallets/")
+
+    return TemplateResponse(request, "register.html", {
+        'form': form
+    })
+
 
 class TransactionJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -38,9 +65,8 @@ def wallets(request):
 
     keypairs = KeyPair.objects.filter(owner__id=request.user.id)
 
-    return TemplateResponse(request, 'wallet.html', {
+    return TemplateResponse(request, 'newwallet.html', {
         'keypairs': keypairs,
-        'no_wallets': keypairs.exists(),
         'new_wallet_form': form,
     })
 

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block extra_head %}
+<link rel="stylesheet" type="text/css" href="/static/walletx.css">
+<script src="/static/jquery.jsqrcode.min.js"></script>
+<script src="/static/jsqrcode/grid.js"></script>
+<script src="/static/jsqrcode/version.js"></script>
+<script src="/static/jsqrcode/detector.js"></script>
+<script src="/static/jsqrcode/formatinf.js"></script>
+<script src="/static/jsqrcode/errorlevel.js"></script>
+<script src="/static/jsqrcode/bitmat.js"></script>
+<script src="/static/jsqrcode/datablock.js"></script>
+<script src="/static/jsqrcode/bmparser.js"></script>
+<script src="/static/jsqrcode/datamask.js"></script>
+<script src="/static/jsqrcode/rsdecoder.js"></script>
+<script src="/static/jsqrcode/gf256poly.js"></script>
+<script src="/static/jsqrcode/gf256.js"></script>
+<script src="/static/jsqrcode/decoder.js"></script>
+<script src="/static/jsqrcode/qrcode.js"></script>
+<script src="/static/jsqrcode/findpat.js"></script>
+<script src="/static/jsqrcode/alignpat.js"></script>
+<script src="/static/jsqrcode/databr.js"></script>
+<title></title>
+{% endblock %}
+
+{% block content %}
+
+    <h1 class="logo">Wallets</h1>
+    <h1 class='overall_total'>
+        <img class="spinner" id="overall-spinner" src="/static/spinner16.gif" height="16" width="16">
+        <span id="total-fiat-amount"></span>
+        <select id="fiat-currency-selector">
+            <option value="usd">USD</option>
+            <option value="btc">BTC</option>
+            <option value="cad">CAD</option>
+            <option value='rur'>RUR</option>
+            <option value="eur">EUR</option>
+            <option value="cny">CNY</option>
+        </select>
+    </h1>
+    <div style="clear: both;"></div>
+    <div id="failures-detected">Some wallet totals could not be computed</div>
+    <hr>
+    <button id="new-wallet">Create New Wallet</button>
+
+    {% if no_wallets %}
+    <h2 class="no-wallets">No wallets yet, add a wallet from the button above.</h2>
+    {% endif %}
+
+    {% for crypto_symbol, keypairs in keypairs.by_crypto %}
+
+    <div id="{{ crypto_symbol }}">
+        <img class="crypto-logo" src="/static/{{ keypair.crypto }}-logo.png" width="128" height="128">
+        {{ crypto_symbol|upper }}
+
+        <div class="keypair_container">
+            {% for keypair in keypairs %}
+            <div class="keypair" id="{{ keypair.address }}" data-id="{{ keypair.id }}">
+                Address: <span class="address">{{ keypair.address }}</span><br>
+                Balance: <span class="balance">{# to be filled in later #}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% endfor %}
+{% endblock %}
