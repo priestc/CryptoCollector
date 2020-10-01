@@ -2,7 +2,7 @@ CryptoCollector
 =========
 
 CryptoCollector is cryptocurrency web wallet, supporting Bitcoin and a large number of Altcoins.
-It runs on a server, and is controlled from a webrowser.
+It runs on a server, and is controlled from a web browser.
 Written in python, using the django web framework.
 
 Currencies supported
